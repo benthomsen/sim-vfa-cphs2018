@@ -8,9 +8,14 @@ classdef SimVFA < handle
         pltOpt    % struct for plotting options
     end
     methods
-        function vfa = SimVFA(opt) % constructor
+        function vfa = SimVFA(opt, init_cond) % constructor
             
-            vfa.setSimOpts(opt); % set basic options for simulation
+            % if no ICs are supplied, initialize as empty
+            if (nargin < 2)
+                init_cond = [];
+            end
+            
+            vfa.setSimOpts(opt, init_cond); % set basic options for simulation
             vfa.setTrimOpts();   % set params for trimming routine
             vfa.setPlotOpts();   % set basic plotting options
             
@@ -31,7 +36,7 @@ classdef SimVFA < handle
             
         end
         
-        function setSimOpts(vfa, opt)
+        function setSimOpts(vfa, opt, init_cond)
         % set basic simulation options: uncertainty, commands, indices, etc.
         
             SO = vfa.simOpt; % shorthand
@@ -80,36 +85,46 @@ classdef SimVFA < handle
                 SO.pActOrder = max(1, SO.mActOrder); % default to first-order actuators
             end
             
-            % carry over fields to continue a previous sim
-            if (isfield(opt, 'tstart') && ~isempty(opt.tstart))
-                SO.tstart = max(0, opt.tstart); % set start time of simulation
+            if (~isempty(init_cond))
+                % carry over fields to continue a previous sim
+                if (isfield(init_cond, 'tstart') && ~isempty(init_cond.tstart))
+                    SO.tstart = max(0, init_cond.tstart); % set start time of simulation
+                else
+                    SO.tstart = 0;
+                end
+                if (isfield(init_cond, 'state_carry') && ~isempty(init_cond.state_carry))
+                    SO.state_carry = init_cond.state_carry;
+                else
+                    SO.state_carry = 0;
+                end
+                if (isfield(init_cond, 'xm_carry') && ~isempty(init_cond.xm_carry))
+                    SO.xm_carry = init_cond.xm_carry;
+                else
+                    SO.xm_carry = 0;
+                end
+                if (isfield(init_cond, 'cmd_carry') && ~isempty(init_cond.cmd_carry))
+                    SO.cmd_filter_0 = init_cond.cmd_carry;
+                else
+                    SO.cmd_filter_0 = 0;
+                end
+                if (isfield(init_cond, 'act_carry') && ~isempty(init_cond.act_carry))
+                    SO.act_carry = init_cond.act_carry;
+                else
+                    SO.act_carry = 0;
+                end
+                if (isfield(init_cond, 'ada_carry') && ~isempty(init_cond.ada_carry))
+                    SO.ada_carry = init_cond.ada_carry;
+                else
+                    SO.ada_carry = [];
+                end
             else
                 SO.tstart = 0;
-            end
-            if (isfield(opt, 'state_carry') && ~isempty(opt.state_carry))
-                SO.state_carry = opt.state_carry;
-            else
                 SO.state_carry = 0;
-            end
-            if (isfield(opt, 'xm_carry') && ~isempty(opt.xm_carry))
-                SO.xm_carry = opt.xm_carry;
-            else
                 SO.xm_carry = 0;
-            end
-            if (isfield(opt, 'cmd_carry') && ~isempty(opt.cmd_carry))
-                SO.cmd_filter_0 = opt.cmd_carry;
-            else
                 SO.cmd_filter_0 = 0;
-            end
-            if (isfield(opt, 'act_carry') && ~isempty(opt.act_carry))
-                SO.act_carry = opt.act_carry;
-            else
                 SO.act_carry = 0;
+                SO.ada_carry = [];
             end
-            if (isfield(opt, 'ada_carry') && ~isempty(opt.ada_carry))
-                SO.ada_carry = opt.ada_carry;
-            end
-
             
             % uncertainty in plant
             Theta_p = [0.6, -4.52, 0, 0.05, 0.41, 1.48;
@@ -881,7 +896,7 @@ classdef SimVFA < handle
                 SO.Gamma.p21 = 200*eye(num_output_i);
 
                 % intial conditions
-                if (SO.tstart == 0)
+                if ((SO.tstart == 0) || isempty(vfa.simOpt.ada_carry))
                     SO.lambda_0 = eye(num_input);
                     SO.psi1_0 = zeros(num_state-num_input,num_input);
                     SO.psi2_0 = zeros(num_state,num_input);
@@ -939,7 +954,7 @@ classdef SimVFA < handle
                 SO.Gamma.p21 = 400*eye(num_output_i);
 
                 % intial conditions
-                if (SO.tstart == 0)
+                if ((SO.tstart == 0) || isempty(vfa.simOpt.ada_carry))
                     SO.lambda_0 = eye(num_input);
                     SO.psi1_0 = zeros(num_state-num_input,num_input);
                     SO.psi2_0 = zeros(num_state,num_input);

@@ -150,8 +150,8 @@ SOO1 = vfa1.simOutObj;
 SOO2 = vfa2.simOutObj;
 SOO3 = vfa3.simOutObj;
 
-figure('Position',[1,1, 1000, 600]);
-subplot(4,1,1)
+figure('Position',[1,1, 1000, 400]);
+subplot(2,2,1)
 plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1)
 hold on; grid on; 
 plot(SOO1.t_sim(1:ind1), SOO1.z(1,1:ind1)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
@@ -166,7 +166,7 @@ h=legend('Command', 'Output');
 set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,2)
+subplot(2,2,2)
 plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1)
 hold on; grid on; 
 plot(SOO1.t_sim(1:ind1), SOO1.z(2,1:ind1), 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
@@ -179,7 +179,7 @@ line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', '
 title('Vertical Accel (ft/s^2)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,3)
+subplot(2,2,3)
 plot(SOO1.t_sim(1:ind1), SOO1.u_p(1,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
 plot(SOO2.t_sim(1:ind2), SOO2.u_p(1,1:ind2)*180/pi, 'LineWidth', 1);
 plot(SOO3.t_sim, SOO3.u_p(1,:)*180/pi, 'LineWidth', 1);
@@ -188,9 +188,10 @@ ylim([0 3])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
 title('Outer Aileron (deg)')
+xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,4)
+subplot(2,2,4)
 plot(SOO1.t_sim(1:ind1), SOO1.u_p(2,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
 plot(SOO2.t_sim(1:ind2), SOO2.u_p(2,1:ind2)*180/pi, 'LineWidth', 1);
 plot(SOO3.t_sim, SOO3.u_p(2,:)*180/pi, 'LineWidth', 1);
@@ -201,5 +202,3 @@ line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', '
 title('Center Elevator (deg)')
 xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
-
-tightfig()
