@@ -80,6 +80,37 @@ classdef SimVFA < handle
                 SO.pActOrder = max(1, SO.mActOrder); % default to first-order actuators
             end
             
+            % carry over fields to continue a previous sim
+            if (isfield(opt, 'tstart') && ~isempty(opt.tstart))
+                SO.tstart = max(0, opt.tstart); % set start time of simulation
+            else
+                SO.tstart = 0;
+            end
+            if (isfield(opt, 'state_carry') && ~isempty(opt.state_carry))
+                SO.state_carry = opt.state_carry;
+            else
+                SO.state_carry = 0;
+            end
+            if (isfield(opt, 'xm_carry') && ~isempty(opt.xm_carry))
+                SO.xm_carry = opt.xm_carry;
+            else
+                SO.xm_carry = 0;
+            end
+            if (isfield(opt, 'cmd_carry') && ~isempty(opt.cmd_carry))
+                SO.cmd_filter_0 = opt.cmd_carry;
+            else
+                SO.cmd_filter_0 = 0;
+            end
+            if (isfield(opt, 'act_carry') && ~isempty(opt.act_carry))
+                SO.act_carry = opt.act_carry;
+            else
+                SO.act_carry = 0;
+            end
+            if (isfield(opt, 'ada_carry') && ~isempty(opt.ada_carry))
+                SO.ada_carry = opt.ada_carry;
+            end
+
+            
             % uncertainty in plant
             Theta_p = [0.6, -4.52, 0, 0.05, 0.41, 1.48;
                        0.1, 1.83, 0, -0.02, -0.35, -0.59]'; % from example in paper
@@ -320,6 +351,8 @@ classdef SimVFA < handle
             SI = SI.setVariable('Ca', SO.Ca);
             SI = SI.setVariable('Cact', SO.Cact);
             SI = SI.setVariable('Ccmd', SO.Ccmd);
+            SI = SI.setVariable('Ccmd_dot', SO.Ccmd_dot);
+            SI = SI.setVariable('cmd_filter_0', SO.cmd_filter_0);
             SI = SI.setVariable('Cz', SO.Cz);
             SI = SI.setVariable('d_mean', SO.d_mean);
             SI = SI.setVariable('d_sam', SO.d_sam);
@@ -331,11 +364,13 @@ classdef SimVFA < handle
             SI = SI.setVariable('r_timeseries', SO.r_timeseries);
             SI = SI.setVariable('samplet', SO.samplet);
             SI = SI.setVariable('tpower', SO.tpower);
+            SI = SI.setVariable('tstart', SO.tstart);
             SI = SI.setVariable('tsim', SO.tsim);
             SI = SI.setVariable('xm_0', SO.xm_0);
+            SI = SI.setVariable('xact_0', SO.xact_0);
             SI = SI.setVariable('input_hold', SO.input_hold);
             SI = SI.setVariable('state_hold', SO.state_hold);
-            SI = SI.setVariable('initstate', SO.state_hold);
+            SI = SI.setVariable('initstate', SO.initstate);
             
             SI = SI.setVariable('Aa_M', TP.tables.Aa_M);
             SI = SI.setVariable('Ba_M', TP.tables.Ba_M);
@@ -351,7 +386,6 @@ classdef SimVFA < handle
             if (SO.mActOrder == 2) % second-order actuator model for control
 
                 SI = SI.setVariable('Cact_dot', SO.Cact_dot);
-                SI = SI.setVariable('Ccmd_dot', SO.Ccmd_dot);
                 SI = SI.setVariable('Gamma_l', SO.Gamma.l);
                 SI = SI.setVariable('Gamma_p1', SO.Gamma.p1);
                 SI = SI.setVariable('Gamma_p2', SO.Gamma.p2);
@@ -524,8 +558,6 @@ classdef SimVFA < handle
                         Ba2  = Aa*Ba*SO.a22 + Ba*SO.a21; % RD2 input path
 
 %                         % Add fictitious inputs (squaring up): 
-%                         Ba_add_pool = null([Ca; (Ca*Aa)]);
-%                         Ba_aug = [Ba, 0.1*(-2*Ba_add_pool(:,5)+16*Ba_add_pool(:,2)+0.5*Ba_add_pool(:,6))];
                         [Ba_aug, ~] = SimVFA.squareUpB(Aa, Ba, Ca, 1, 500);
                         Da_aug = [Da, [0,0,0]']; % no direct feedthrough
 
@@ -763,6 +795,14 @@ classdef SimVFA < handle
             % no actuator dynamics or integral error in these
             SO.input_hold = TP.trim_inputs(SO.eta_nom+1, :); % initial inputs (at nominal dihedral)
             SO.state_hold = TP.trim_states(SO.eta_nom+1, :); % initial states (at nominal dihedral)
+            
+            % if sim is a "continuation" of another sim, set ICs
+            if (SO.tstart == 0)
+                SO.initstate = SO.state_hold;
+            else
+                SO.initstate = SO.state_carry;
+            end
+            
             Ap = TP.A_hold(:,:,SO.eta_nom+1);   % linearized state matrix (at nominal dihedral)
             Bp = TP.B_hold(:,1:5,SO.eta_nom+1); % linearized input matrix (at nominal dihedral)
             SO.Bp = Bp;
@@ -807,8 +847,12 @@ classdef SimVFA < handle
                 SO.psi31_0 = zeros(num_output_i,num_output_i);
                 SO.psi31xm_0 = zeros(num_input,num_input);
                 SO.psi32_0 = zeros(num_output_i,num_output_i);
-                SO.xm_0 = zeros(num_state_i,1);
-
+                if (SO.tstart == 0)
+                    SO.xm_0 = zeros(num_state_i,1);
+                else
+                    SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
+                end
+                
                 % more high-order tuner gains
                 mu = 0.02;
                 SO.mu.lambda = mu; SO.mu.vlambda = mu; SO.mu.psi1 = mu; 
@@ -822,7 +866,7 @@ classdef SimVFA < handle
                 SO.Bact_x = SO.Asim(num_state-2*num_input+1:num_state,1:num_state-2*num_input);
                 SO.Cact = [eye(num_input),zeros(num_input)];
                 SO.Cact_dot = [zeros(num_input),eye(num_input)];
-
+                
             elseif (SO.pActOrder == 2) % true second-orde actuators, first-order model
 
                 % Reference Model Setup
@@ -837,11 +881,20 @@ classdef SimVFA < handle
                 SO.Gamma.p21 = 200*eye(num_output_i);
 
                 % intial conditions
-                SO.lambda_0 = eye(num_input);
-                SO.psi1_0 = zeros(num_state-num_input,num_input);
-                SO.psi2_0 = zeros(num_state,num_input);
-                SO.psi21_0 = zeros(num_output_i,num_output_i);
-                SO.xm_0 = zeros(num_state_i,1);
+                if (SO.tstart == 0)
+                    SO.lambda_0 = eye(num_input);
+                    SO.psi1_0 = zeros(num_state-num_input,num_input);
+                    SO.psi2_0 = zeros(num_state,num_input);
+                    SO.psi21_0 = zeros(num_output_i,num_output_i);
+                    SO.xm_0 = zeros(num_state_i,1);
+                else
+                    CA = vfa.simOpt.ada_carry;
+                    SO.lambda_0 = CA.lambda;
+                    SO.psi1_0 = CA.psi1;
+                    SO.psi2_0 = CA.psi2;
+                    SO.psi21_0 = CA.psi21;
+                    SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
+                end
 
                 % for second-order actuators with first-order model
                 % this is all here to calculate Asim used in Bact_x
@@ -886,28 +939,49 @@ classdef SimVFA < handle
                 SO.Gamma.p21 = 400*eye(num_output_i);
 
                 % intial conditions
-                SO.lambda_0 = eye(num_input);
-                SO.psi1_0 = zeros(num_state-num_input,num_input);
-                SO.psi2_0 = zeros(num_state,num_input);
-                SO.psi21_0 = zeros(num_output_i,num_output_i);
-
-                SO.xm_0 = zeros(num_state_i,1);
+                if (SO.tstart == 0)
+                    SO.lambda_0 = eye(num_input);
+                    SO.psi1_0 = zeros(num_state-num_input,num_input);
+                    SO.psi2_0 = zeros(num_state,num_input);
+                    SO.psi21_0 = zeros(num_output_i,num_output_i);
+                    SO.xm_0 = zeros(num_state_i,1);
+                else
+                    CA = vfa.simOpt.ada_carry;
+                    SO.lambda_0 = CA.lambda;
+                    SO.psi1_0 = CA.psi1;
+                    SO.psi2_0 = CA.psi2;
+                    SO.psi21_0 = CA.psi21;
+                    SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
+                end
 
                 % actuator dynamics (real dynamics, not nominal)
                 SO.Aact = SO.eig_act*eye(2);
                 SO.Bact = -SO.eig_act*eye(2);
                 SO.Bact_x = SO.Asim(num_state-num_input+1:num_state,1:num_state-num_input);
                 SO.Cact = eye(num_input);
-
+                
             end
-                        
+            
+            % ICs for actuator states
+            if (SO.tstart == 0)
+                SO.xact_0 = zeros(length(SO.Aact),1);
+            else
+                if (length(SO.act_carry) == length(SO.Aact))
+                    SO.xact_0 = SO.act_carry;
+                elseif (length(SO.act_carry) < length(SO.Aact))
+                    SO.xact_0 = [SO.act_carry; zeros(length(SO.Aact)-length(SO.act_carry), 1)];
+                else 
+                    SO.xact_0 = SO.act_carry(1:length(SO.Aact));
+                end
+            end
+            
             % command filter
             SO.Acmd = [zeros(num_cmd),eye(num_cmd);
                     -SO.w_cmd^2*eye(num_cmd),-2*SO.w_cmd*SO.zeta_cmd*eye(num_cmd)];
             SO.Bcmd = [zeros(num_cmd);SO.w_cmd^2*eye(num_cmd)];
             SO.Ccmd = [eye(num_cmd),zeros(num_cmd)];
             SO.Ccmd_dot = [zeros(num_cmd),eye(num_cmd)];
-
+            
             % process noise
             SO.d_seed = (1:num_input)';
             SO.d_sam  = 1;
@@ -1011,28 +1085,32 @@ classdef SimVFA < handle
             figure('Position',[1,1, 800, 400]);
             subplot(2,2,1)
             plot(SOO.t_sim, SOO.r_cmd(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1)
-            hold on; plot(SOO.t_sim, SOO.z(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1)
+            hold on; grid on; plot(SOO.t_sim, SOO.z(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.')
             xlim([0 tsim])
             title('Dihedral (deg)')
+            h=legend('Command', 'Output');
+            set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
             subplot(2,2,2)
             plot(SOO.t_sim, SOO.r_cmd(2,:), 'LineWidth', 1)
-            hold on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1)
+            hold on; grid on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1, 'LineStyle', '-.')
             xlim([0 tsim])
             title('Vertical Accel (ft/s^2)')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
             subplot(2,2,3)
-            plot(SOO.t_sim, SOO.u_p(1,:)*180/pi, 'LineWidth', 1)
+            plot(SOO.t_sim, SOO.u_p(1,:)*180/pi, 'LineWidth', 1); grid on;
             xlim([0 tsim])
-            title('Aileron (deg)')
+            title('Outer Aileron (deg)')
+            xlabel('Time (s)')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
             subplot(2,2,4)
-            plot(SOO.t_sim, SOO.u_p(2,:)*180/pi, 'LineWidth', 1)
+            plot(SOO.t_sim, SOO.u_p(2,:)*180/pi, 'LineWidth', 1); grid on;
             xlim([0 tsim])
-            title('Elevator (deg)')
+            title('Center Elevator (deg)')
+            xlabel('Time (s)')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
                     
             % plot adaptive parameters (matrix norms to reduce dimensionality)
@@ -1068,11 +1146,11 @@ classdef SimVFA < handle
 
                     figure('Position',[100,100, 800, 400]);
                     plot(SOO.t_sim, norms, 'LineWidth', 1);
-                    xlim([0 tsim]);
-                    grid on;
+                    xlim([0 tsim]); grid on;
                     title('Normalized Learned Parameters')
+                    xlabel('Time (s)')
                     h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_3^1\|$', '$\|\psi_3^2\|$', '$\|\underline{\Psi}_3\|$');
-                    set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','NorthEast')
+                    set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
                     set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
                 else % first-order actuator dynamics
                     norm_lambda_ada = zeros(steps, 1);
@@ -1096,11 +1174,11 @@ classdef SimVFA < handle
 
                     figure('Position',[100,100, 800, 400]);
                     plot(SOO.t_sim, norms, 'LineWidth', 1);
-                    xlim([0 tsim]);
-                    grid on;
+                    xlim([0 tsim]); grid on;
                     title('Normalized Learned Parameters')
+                    xlabel('Time (s)')
                     h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_{2}^1\|$');
-                    set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','NorthEast')
+                    set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
                     set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
                 end
             end
