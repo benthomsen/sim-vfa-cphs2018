@@ -79,11 +79,9 @@ opt.reComp     = true;              % trim, linearize, recompute controller
 opt.pActOrder  = 1;                 % order of plant actuator dynamics (1 or 2)
 opt.mActOrder  = 1;                 % order of modeled actuator dynamics
                                     % (1 or 2) and <= pActOrder
-opt.tstart = 0;
                                     
 vfa1 = SimVFA(opt);  % initialize and setup the simulation
 vfa1.runSim();       % run the simulation
-% vfa1.plotSim();      % plot output from the simulation
 
 %% Second Sim
 opt = [];
@@ -97,25 +95,24 @@ opt.pActOrder  = 2;                 % order of plant actuator dynamics (1 or 2)
 opt.mActOrder  = 1;                 % order of modeled actuator dynamics
                                     % (1 or 2) and <= pActOrder
 
-opt.tstart = 400;
-ind1 = find(vfa1.simOutObj.t_sim>=opt.tstart,1);
+init_cond.tstart = 400;
+ind1 = find(vfa1.simOutObj.t_sim>=init_cond.tstart,1);
 
-opt.state_carry = zeros(7,1);
-opt.state_carry(vfa1.simOpt.i_state_sel) = vfa1.simOutObj.xp(ind1,:);
-opt.state_carry(3) = vfa1.trimPts.hinitial;
-opt.xm_carry = vfa1.simOutObj.xm(1:length(vfa1.simOpt.i_state_sel), ind1);
-opt.cmd_carry = [vfa1.simOutObj.r_cmd(:,ind1); vfa1.simOutObj.r_cmd_dot(:,ind1)];
-opt.act_carry = vfa1.simOutObj.xact(:,ind1);
+init_cond.state_carry = zeros(7,1);
+init_cond.state_carry(vfa1.simOpt.i_state_sel) = vfa1.simOutObj.xp(ind1,:);
+init_cond.state_carry(3) = vfa1.trimPts.hinitial;
+init_cond.xm_carry = vfa1.simOutObj.xm(1:length(vfa1.simOpt.i_state_sel), ind1);
+init_cond.cmd_carry = [vfa1.simOutObj.r_cmd(:,ind1); vfa1.simOutObj.r_cmd_dot(:,ind1)];
+init_cond.act_carry = vfa1.simOutObj.xact(:,ind1);
 
 ada.lambda = vfa1.simOutObj.lambda_ada(:,:,ind1);
 ada.psi1 = vfa1.simOutObj.psi1_ada(:,:,ind1);
 ada.psi2 = vfa1.simOutObj.psi2_ada(:,:,ind1);
 ada.psi21 = vfa1.simOutObj.psi21_ada(:,:,ind1);
-opt.ada_carry = ada;
+init_cond.ada_carry = ada;
 
-vfa2 = SimVFA(opt);  % initialize and setup the simulation
+vfa2 = SimVFA(opt, init_cond);  % initialize and setup the simulation
 vfa2.runSim();       % run the simulation
-% vfa2.plotSim();      % plot output from the simulation
 
 %% Third Sim
 opt = [];
@@ -129,19 +126,19 @@ opt.pActOrder  = 2;                 % order of plant actuator dynamics (1 or 2)
 opt.mActOrder  = 2;                 % order of modeled actuator dynamics
                                     % (1 or 2) and <= pActOrder
 
-opt.tstart = 550;
-ind2 = find(vfa2.simOutObj.t_sim>=opt.tstart,1);
+init_cond = [];
+init_cond.tstart = 550;
+ind2 = find(vfa2.simOutObj.t_sim>=init_cond.tstart,1);
 
-opt.state_carry = zeros(7,1);
-opt.state_carry(vfa2.simOpt.i_state_sel) = vfa2.simOutObj.xp(ind2,:);
-opt.state_carry(3) = vfa2.trimPts.hinitial;
-opt.xm_carry = vfa2.simOutObj.xm(1:length(vfa2.simOpt.i_state_sel), ind2);
-opt.cmd_carry = [vfa2.simOutObj.r_cmd(:,ind2); vfa2.simOutObj.r_cmd_dot(:,ind2)];
-opt.act_carry = vfa2.simOutObj.xact(:,ind2);
+init_cond.state_carry = zeros(7,1);
+init_cond.state_carry(vfa2.simOpt.i_state_sel) = vfa2.simOutObj.xp(ind2,:);
+init_cond.state_carry(3) = vfa2.trimPts.hinitial;
+init_cond.xm_carry = vfa2.simOutObj.xm(1:length(vfa2.simOpt.i_state_sel), ind2);
+init_cond.cmd_carry = [vfa2.simOutObj.r_cmd(:,ind2); vfa2.simOutObj.r_cmd_dot(:,ind2)];
+init_cond.act_carry = vfa2.simOutObj.xact(:,ind2);
 
-vfa3 = SimVFA(opt);  % initialize and setup the simulation
+vfa3 = SimVFA(opt, init_cond);  % initialize and setup the simulation
 vfa3.runSim();       % run the simulation
-% vfa3.plotSim();      % plot output from the simulation
 
 %% Plotting 
 
@@ -150,8 +147,8 @@ SOO1 = vfa1.simOutObj;
 SOO2 = vfa2.simOutObj;
 SOO3 = vfa3.simOutObj;
 
-figure('Position',[1,1, 1000, 400]);
-subplot(2,2,1)
+f = figure('Position',[1,1, 1000, 600]);
+subplot(4,1,1)
 plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1)
 hold on; grid on; 
 plot(SOO1.t_sim(1:ind1), SOO1.z(1,1:ind1)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
@@ -166,7 +163,7 @@ h=legend('Command', 'Output');
 set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(2,2,2)
+subplot(4,1,2)
 plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1)
 hold on; grid on; 
 plot(SOO1.t_sim(1:ind1), SOO1.z(2,1:ind1), 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
@@ -179,7 +176,7 @@ line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', '
 title('Vertical Accel (ft/s^2)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(2,2,3)
+subplot(4,1,3)
 plot(SOO1.t_sim(1:ind1), SOO1.u_p(1,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
 plot(SOO2.t_sim(1:ind2), SOO2.u_p(1,1:ind2)*180/pi, 'LineWidth', 1);
 plot(SOO3.t_sim, SOO3.u_p(1,:)*180/pi, 'LineWidth', 1);
@@ -188,10 +185,9 @@ ylim([0 3])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
 title('Outer Aileron (deg)')
-xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(2,2,4)
+subplot(4,1,4)
 plot(SOO1.t_sim(1:ind1), SOO1.u_p(2,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
 plot(SOO2.t_sim(1:ind2), SOO2.u_p(2,1:ind2)*180/pi, 'LineWidth', 1);
 plot(SOO3.t_sim, SOO3.u_p(2,:)*180/pi, 'LineWidth', 1);
@@ -202,3 +198,5 @@ line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', '
 title('Center Elevator (deg)')
 xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+tightfig(f);
