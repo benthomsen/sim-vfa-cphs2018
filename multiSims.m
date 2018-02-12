@@ -146,55 +146,60 @@ tsim = vfa1.simOpt.tsim;
 SOO1 = vfa1.simOutObj;
 SOO2 = vfa2.simOutObj;
 SOO3 = vfa3.simOutObj;
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
+set(groot, 'defaultLegendInterpreter','latex');
+
+% c2 = [0.85, 0.325, 0.098];
+c2 = [0.466, 0.674, 0.188];
 
 f = figure('Position',[1,1, 1000, 600]);
 subplot(4,1,1)
-plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1)
+plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5)
 hold on; grid on; 
-plot(SOO1.t_sim(1:ind1), SOO1.z(1,1:ind1)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
-plot(SOO2.t_sim(1:ind2), SOO2.z(1,1:ind2)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
-plot(SOO3.t_sim, SOO3.z(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
+plot(SOO1.t_sim(1:ind1), SOO1.z(1,1:ind1)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(SOO2.t_sim(1:ind2), SOO2.z(1,1:ind2)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(SOO3.t_sim, SOO3.z(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
 xlim([0 tsim])
 ylim([9 13])
-line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
-line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Dihedral (deg)')
 h=legend('Command', 'Output');
 set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 subplot(4,1,2)
-plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1)
+plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1.5)
 hold on; grid on; 
-plot(SOO1.t_sim(1:ind1), SOO1.z(2,1:ind1), 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
-plot(SOO2.t_sim(1:ind2), SOO2.z(2,1:ind2), 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
-plot(SOO3.t_sim, SOO3.z(2,:), 'LineWidth', 1, 'LineStyle', '-.', 'Color', [0.85, 0.325, 0.098])
+plot(SOO1.t_sim(1:ind1), SOO1.z(2,1:ind1), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(SOO2.t_sim(1:ind2), SOO2.z(2,1:ind2), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(SOO3.t_sim, SOO3.z(2,:), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
 xlim([0 tsim])
 ylim([-1.5 1.5])
-line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
-line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Vertical Accel (ft/s^2)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 subplot(4,1,3)
-plot(SOO1.t_sim(1:ind1), SOO1.u_p(1,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
-plot(SOO2.t_sim(1:ind2), SOO2.u_p(1,1:ind2)*180/pi, 'LineWidth', 1);
-plot(SOO3.t_sim, SOO3.u_p(1,:)*180/pi, 'LineWidth', 1);
+plot(SOO1.t_sim(1:ind1), SOO1.u_p(1,1:ind1)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
+plot(SOO2.t_sim(1:ind2), SOO2.u_p(1,1:ind2)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
+plot(SOO3.t_sim, SOO3.u_p(1,:)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
 xlim([0 tsim])
 ylim([0 3])
-line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
-line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Outer Aileron (deg)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 subplot(4,1,4)
-plot(SOO1.t_sim(1:ind1), SOO1.u_p(2,1:ind1)*180/pi, 'LineWidth', 1); grid on; hold on;
-plot(SOO2.t_sim(1:ind2), SOO2.u_p(2,1:ind2)*180/pi, 'LineWidth', 1);
-plot(SOO3.t_sim, SOO3.u_p(2,:)*180/pi, 'LineWidth', 1);
+plot(SOO1.t_sim(1:ind1), SOO1.u_p(2,1:ind1)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
+plot(SOO2.t_sim(1:ind2), SOO2.u_p(2,1:ind2)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
+plot(SOO3.t_sim, SOO3.u_p(2,:)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
 xlim([0 tsim])
 ylim([0 3])
-line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
-line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle',':', 'LineWidth', 1);
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Center Elevator (deg)')
 xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
