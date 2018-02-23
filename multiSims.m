@@ -95,7 +95,7 @@ opt.pActOrder  = 2;                 % order of plant actuator dynamics (1 or 2)
 opt.mActOrder  = 1;                 % order of modeled actuator dynamics
                                     % (1 or 2) and <= pActOrder
 
-init_cond.tstart = 400;
+init_cond.tstart = 600;
 ind1 = find(vfa1.simOutObj.t_sim>=init_cond.tstart,1);
 
 init_cond.state_carry = zeros(7,1);
@@ -127,7 +127,7 @@ opt.mActOrder  = 2;                 % order of modeled actuator dynamics
                                     % (1 or 2) and <= pActOrder
 
 init_cond = [];
-init_cond.tstart = 550;
+init_cond.tstart = 800;
 ind2 = find(vfa2.simOutObj.t_sim>=init_cond.tstart,1);
 
 init_cond.state_carry = zeros(7,1);
@@ -140,12 +140,22 @@ init_cond.act_carry = vfa2.simOutObj.xact(:,ind2);
 vfa3 = SimVFA(opt, init_cond);  % initialize and setup the simulation
 vfa3.runSim();       % run the simulation
 
-%% Plotting 
+%% Data concatenation
 
 tsim = vfa1.simOpt.tsim;
 SOO1 = vfa1.simOutObj;
 SOO2 = vfa2.simOutObj;
 SOO3 = vfa3.simOutObj;
+
+dihedral = (180/pi) * [SOO1.z(1,1:ind1), SOO2.z(1,1:ind2), SOO3.z(1,:)] + vfa1.simOpt.eta_nom;
+vert_acc = [SOO1.z(2,1:ind1), SOO2.z(2,1:ind2), SOO3.z(2,:)];
+out_ail  = (180/pi) * [SOO1.u_p(1,1:ind1), SOO2.u_p(1,1:ind2), SOO3.u_p(1,:)];
+in_elev  = (180/pi) * [SOO1.u_p(2,1:ind1), SOO2.u_p(2,1:ind2), SOO3.u_p(2,:)];
+time = [SOO1.t_sim(1:ind1); SOO2.t_sim(1:ind2); SOO3.t_sim];
+err_norm = [vecnorm(squeeze(SOO1.y(:,:,1:ind1)-SOO1.ym(:,:,1:ind1))), vecnorm(squeeze(SOO2.y(:,:,1:ind2)-SOO2.ym(:,:,1:ind2))), vecnorm(squeeze(SOO3.y-SOO3.ym))];
+
+%% Plotting: state and control
+
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
 set(groot, 'defaultLegendInterpreter','latex');
 
@@ -156,9 +166,7 @@ f = figure('Position',[1,1, 1000, 600]);
 subplot(4,1,1)
 plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5)
 hold on; grid on; 
-plot(SOO1.t_sim(1:ind1), SOO1.z(1,1:ind1)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
-plot(SOO2.t_sim(1:ind2), SOO2.z(1,1:ind2)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
-plot(SOO3.t_sim, SOO3.z(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(time, dihedral, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
 xlim([0 tsim])
 ylim([9 13])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
@@ -171,33 +179,27 @@ set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontnam
 subplot(4,1,2)
 plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1.5)
 hold on; grid on; 
-plot(SOO1.t_sim(1:ind1), SOO1.z(2,1:ind1), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
-plot(SOO2.t_sim(1:ind2), SOO2.z(2,1:ind2), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
-plot(SOO3.t_sim, SOO3.z(2,:), 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
+plot(time, vert_acc, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
 xlim([0 tsim])
-ylim([-1.5 1.5])
+ylim([-3 3])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Vertical Accel (ft/s^2)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 subplot(4,1,3)
-plot(SOO1.t_sim(1:ind1), SOO1.u_p(1,1:ind1)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
-plot(SOO2.t_sim(1:ind2), SOO2.u_p(1,1:ind2)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
-plot(SOO3.t_sim, SOO3.u_p(1,:)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
+plot(time, out_ail, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
 xlim([0 tsim])
-ylim([0 3])
+ylim([-1 5])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Outer Aileron (deg)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 subplot(4,1,4)
-plot(SOO1.t_sim(1:ind1), SOO1.u_p(2,1:ind1)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
-plot(SOO2.t_sim(1:ind2), SOO2.u_p(2,1:ind2)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
-plot(SOO3.t_sim, SOO3.u_p(2,:)*180/pi, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]);
+plot(time, in_elev, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
 xlim([0 tsim])
-ylim([0 3])
+ylim([-4 1])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 title('Center Elevator (deg)')
@@ -205,3 +207,88 @@ xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
 tightfig(f);
+
+%% Plotting: error
+
+f2 = figure('Position',[1,1, 1000, 220]);
+plot(time, err_norm, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
+xlim([0 tsim])
+ylim([0 3e-3])
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Model-Following Output Error: $\|e_y(t)\|_2$', 'interpreter','latex')
+xlabel('Time (s)')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+tightfig(f2);
+
+%% Data concatenation for adaptive parameters
+
+norm_lambda_ada = zeros(ind1 + ind2, 1);
+norm_psi1_ada   = zeros(ind1 + ind2, 1);
+norm_psi2_ada   = zeros(ind1 + ind2, 1); 
+norm_psi21_ada = zeros(ind1 + ind2, 1);
+
+for i=1:ind1
+    norm_lambda_ada(i) = norm(SOO1.lambda_ada(:,:,i));
+    norm_psi1_ada(i) = norm(SOO1.psi1_ada(:,:,i));
+    norm_psi2_ada(i) = norm(SOO1.psi2_ada(:,:,i));
+    norm_psi21_ada(i) = norm(SOO1.psi21_ada(:,:,i));
+end
+
+for i=1:ind2
+    norm_lambda_ada(ind1+i) = norm(SOO2.lambda_ada(:,:,i));
+    norm_psi1_ada(ind1+i) = norm(SOO2.psi1_ada(:,:,i));
+    norm_psi2_ada(ind1+i) = norm(SOO2.psi2_ada(:,:,i));
+    norm_psi21_ada(ind1+i) = norm(SOO2.psi21_ada(:,:,i));
+end
+
+norm_lambda_ada = norm_lambda_ada/norm_lambda_ada(end);
+norm_psi1_ada   = norm_psi1_ada/norm_psi1_ada(end);
+norm_psi2_ada   = norm_psi2_ada/norm_psi2_ada(end);
+norm_psi21_ada  = norm_psi21_ada/norm_psi21_ada(end);
+
+norms_1 = [norm_lambda_ada, norm_psi1_ada, norm_psi2_ada, norm_psi21_ada];
+    
+steps_2 = length(SOO3.t_sim);
+
+norm_lambda_ada = zeros(steps_2, 1);
+norm_psi1_ada   = zeros(steps_2, 1);
+norm_psi2_ada   = zeros(steps_2, 1); 
+norm_psi31_ada  = zeros(steps_2, 1);
+norm_psi32_ada  = zeros(steps_2, 1);
+norm_psi3_ada   = zeros(steps_2, 1);
+
+for i=1:steps_2
+    norm_lambda_ada(i) = norm(SOO3.lambda_ada(:,:,i));
+    norm_psi1_ada(i) = norm(SOO3.psi1_ada(:,:,i));
+    norm_psi2_ada(i) = norm(SOO3.psi2_ada(:,:,i));
+    norm_psi31_ada(i) = norm(SOO3.psi31_ada(:,:,i));
+    norm_psi32_ada(i) = norm(SOO3.psi32_ada(:,:,i));
+    norm_psi3_ada(i) = norm(SOO3.psi3_ada(:,:,i));
+end
+
+norm_lambda_ada = norm_lambda_ada/norm_lambda_ada(end);
+norm_psi1_ada   = norm_psi1_ada/norm_psi1_ada(end);
+norm_psi2_ada   = norm_psi2_ada/norm_psi2_ada(end);
+norm_psi31_ada  = norm_psi31_ada/norm_psi31_ada(end);
+norm_psi32_ada  = norm_psi32_ada/norm_psi32_ada(end);
+norm_psi3_ada   = norm_psi3_ada/norm_psi3_ada(end);
+
+norms_2 = [norm_lambda_ada, norm_psi1_ada, norm_psi2_ada, ...
+        norm_psi31_ada, norm_psi32_ada, norm_psi3_ada];
+
+%% Plotting: adaptive parameters
+
+figure('Position',[100,100, 800, 400]);
+plot(time(1:ind1+ind2), norms_1, 'LineWidth', 1); grid on; hold on;
+plot(time(ind1+ind2+1:end), norms_2, 'LineWidth', 1);
+xlim([0 tsim]);
+ylim([0 1.2]);
+title('Normalized Learned Parameters')
+xlabel('Time (s)')
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_{2}^1\|$', ...
+         '$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_3^1\|$', '$\|\psi_3^2\|$', '$\|\underline{\Psi}_3\|$');
+set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)

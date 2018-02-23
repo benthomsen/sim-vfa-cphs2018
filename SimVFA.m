@@ -188,9 +188,11 @@ classdef SimVFA < handle
                 % for baseline LQR design
                 SO.rk = 50*eye(length(SO.i_input_sel));
                 if (SO.mActOrder == 2)
-                    SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,0.0001,0.0001,2,0.0002]);
+%                     SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,0.0001,0.0001,2,0.0002]);
+                    SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,0.0001,0.0001,0.5,0.00005]);
                 else
-                    SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,8,0.001]);
+%                     SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,8,0.001]);
+                SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,10,0.00025]);
                 end
             else % model order = true order of linearized dynamics
                 % first order actuator dynamics (nominal)
@@ -223,7 +225,8 @@ classdef SimVFA < handle
 
                 % for baseline LQR design
                 SO.rk = 50*eye(length(SO.i_input_sel));
-                SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,8,0.001]);
+%                 SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,8,0.001]);
+                SO.qk = diag([0.001,2,0.001,2,200,50,0.001,0.001,10,0.00025]);
             end
             
             SO.Lambda_s = SO.lambda_s*eye(2); % actuator effectiveness matrix
@@ -242,8 +245,8 @@ classdef SimVFA < handle
             SO.eta_nom = 11; % select dihedral angle (deg) [== ind-1] from linearized tables
 
             % commands
-            r_step_eta = 1 * pi/180 * [1, 1, 1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 1, 1];
-            r_step_Az  = 1.5 * [-1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1];
+            r_step_eta = 1 * pi/180 * [1, 1, 1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 1, 1, 1, -1, -1];
+            r_step_Az  = 1.5 * [-1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1];
             r_step_scaled = [r_step_eta; r_step_Az];
 
             % simulation times for command steps
@@ -888,10 +891,10 @@ classdef SimVFA < handle
 
                 % Simulation parameters
                 % tuner gains
-                SO.Gamma.l = 1000*eye(num_input);
-                SO.Gamma.p1 = 0.1*eye(num_state-num_input);
-                SO.Gamma.p2 = 0.1*eye(num_state);
-                SO.Gamma.p21 = 200*eye(num_output_i);
+                SO.Gamma.l = 2000*eye(num_input);
+                SO.Gamma.p1 = 0.2*eye(num_state-num_input);
+                SO.Gamma.p2 = 0.2*eye(num_state);
+                SO.Gamma.p21 = 400*eye(num_output_i);
 
                 % intial conditions
                 if ((SO.tstart == 0) || isempty(vfa.simOpt.ada_carry))
@@ -1109,7 +1112,7 @@ classdef SimVFA < handle
             plot(SOO.t_sim, SOO.r_cmd(2,:), 'LineWidth', 1)
             hold on; grid on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1, 'LineStyle', '-.')
             xlim([0 tsim])
-            title('Vertical Accel Downward (ft/s^2)')
+            title('Vertical Accel (ft/s^2)')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
             subplot(2,2,3)
