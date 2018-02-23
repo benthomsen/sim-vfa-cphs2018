@@ -1,0 +1,128 @@
+\documentclass[english]{IEEEtran}
+\usepackage{textcomp}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage{array}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{cite}
+\PassOptionsToPackage{normalem}{ulem}
+\usepackage{ulem}
+\usepackage[unicode=true]{hyperref}
+\allowdisplaybreaks
+
+\title{\huge{Shared Decision-Making and Adaptive Control:\\ Anomaly Mitigation on MIMO Nonlinear Aircraft Model}}
+\author{Benjamin T. Thomsen and Anuradha M. Annaswamy}
+\begin{document}
+\maketitle
+
+\section{Aircraft Model}
+The aircraft model used is a very flexible aircraft (VFA) model developed by Gibson \textit{et al.} \cite{gibson2011}, as shown in Figure \ref{fig:vfa}. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\columnwidth]{../vfa.png}
+	\caption{Rendering of very flexible aircraft model}
+	\label{fig:vfa}
+\end{figure}
+
+The VFA model consists of three rigid lifting sections which are hinged together such that the aircraft is able to bend at the joints of the three sections. The seven states of this nonlinear model are
+\begin{equation}
+x = \begin{bmatrix}
+V \\
+\alpha \\
+h \\
+\theta \\
+q\\
+\eta\\
+\dot{\eta}
+\end{bmatrix} =
+\begin{bmatrix}
+	 $Airspeed (ft/s)$\\ $Angle of attack (rad)$\\ $Altitude (ft)$\\ $Pitch angle (rad)$\\ $Pitch rate (rad/s)$\\ $Dihedral (rad)$\\ $Dihedral rate (rad/s)$
+\end{bmatrix}
+\end{equation}
+
+In this example, we consider the longitudinal dynamics of this aircraft, and linearize and trim the aircraft in straight and level flight using the inputs
+\begin{equation}
+	u = \begin{bmatrix}
+		$Thrust (lbf)$\\
+		$Center aileron (rad)$\\
+		$Outer aileron (rad)$\\
+		$Center elevator (rad)$\\
+		$Outer elevator (rad)$
+	\end{bmatrix}
+\end{equation}
+at an airspeed of $68$ ft/s, altitude of $40,000$ ft, $2.8^\circ$ angle of attack and pitch angle, and dihedral angles ranging from $0$ to $20^\circ$ in $1^\circ$ increments. Control of the dihedral angle is desired as a large dihedral angle is inefficient for lift generation (and is open-loop unstable), while a small dihedral angle will require more control effort to hold, increasing drag and power requirements while also potentially twisting the aircraft. The measurements available for control design are
+\begin{equation}
+y = \begin{bmatrix}
+	$Pitch rate (rad/s)$\\
+	$Dihedral angle (rad)$\\
+	$Vertical acceleration (ft/s)$
+\end{bmatrix}	
+\end{equation}
+
+This nonlinear VFA model is augmented with a linear actuator model so that slow actuator dynamics can be simulated. Figure \ref{fig:trim-poles} shows the poles of the linearized system for different dihedral angles, and Figure \ref{fig:trim-poles-zoom} shows how the system has unstable poles when trimmed above $11^\circ$ dihedral. Figure \ref{fig:trim-inputs} shows the thrust and control surface deflections for the trimmed VFA model over a range of dihedral angles.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles.pdf}
+	\caption{Poles of linearized system for different dihedral angles}
+	\label{fig:trim-poles}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles-zoom.pdf}
+	\caption{Dominant poles of linearized system}
+	\label{fig:trim-poles-zoom}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-inputs.pdf}
+	\caption{Inputs to system at different dihedral angles}
+	\label{fig:trim-inputs}
+\end{figure}
+
+\section{Nominal Control Design}
+An autonomous controller is designed  to track commands for vertical acceleration of the VFA while regulating the dihedral angle. The control goal for ``nominal'' operation is to design linear controllers which are able to:
+\begin{enumerate}
+	\item Accommodate errors and uncertainty in the nonlinear model which is trimmed and linearized for control design, which we model as state-dependent and input-dependent parametric uncertainties in the linearized system
+	\item Account for slow first-order linear actuators dynamics with uncertainty in the DC gain and bandwidth (also captured as parametric uncertainties in the linearized system)
+\end{enumerate}
+using measurements of the pitch rate, dihedral angle, and vertical acceleration only. To accomplish these goals, we develop the ``nominal'' controller with the following components.
+\begin{enumerate}
+	\item A baseline control design using the linear quadratic regulator method with feedback on integrated tracking error (LQR-PI)
+	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
+\end{enumerate}
+
+The adaptive controller uses a \textit{closed-loop reference model} (CRM) for model following, which functions simultaneously as an observer for the baseline LQR-PI control \cite{lavretsky2015}.
+
+\section{Shared Controller}
+A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft \cite{thomsen2018}. In the following simulation, we demonstrate an example of how this is possible.
+
+\section{Numerical Simulation}
+In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (LQR-PI + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by Qu \cite{qu2016}.
+
+There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \leq t < 600 s$, the vehicle operates in nominal operation with the adaptive controller and baseline LQR-PI control design. At $t = 600 s$, a failure causes the vehicle's actuators to change from first-order to second-order. For $600 \leq t < 800 s$, the ``nominal'' controller is attempting to control the system which has severe unmodeled dynamics. In the shared control framework, the human operator notices that this closed-loop behavior is anomalous, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/3stage_sim_v2.pdf}
+	\caption{Command tracking and control effort across three stages of simulation}
+	\label{fig:sim}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/3stage_sim_err.pdf}
+	\caption{Norm of output error across three stages of simulation}
+	\label{fig:err}
+\end{figure}
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{thomsen-cphs-2018-bib}
+\end{document}
