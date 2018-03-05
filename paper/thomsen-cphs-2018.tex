@@ -1,29 +1,344 @@
-\documentclass[english]{IEEEtran}
-\usepackage{textcomp}
+\documentclass[english]{ifacconf}
 \usepackage[utf8]{inputenc}
-\usepackage{babel}
 \usepackage{array}
 \usepackage{float}
 \usepackage{amsmath}
-\usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{cite}
-\PassOptionsToPackage{normalem}{ulem}
-\usepackage{ulem}
-\usepackage[unicode=true]{hyperref}
-\allowdisplaybreaks
+\usepackage{natbib}
+%\usepackage[unicode=true]{hyperref}
 
-\title{\huge{Shared Decision-Making and Adaptive Control:\\ Anomaly Mitigation on MIMO Nonlinear Aircraft Model}}
-\author{Benjamin T. Thomsen and Anuradha M. Annaswamy}
+%\newtheorem*{assumption*}{\assumptionnumber}
+%\providecommand{\assumptionnumber}{}
+%\makeatletter
+%\newenvironment{assumption}[2]
+% {%
+%  \renewcommand{\assumptionnumber}{Assumption #1#2}%
+%  \begin{assumption*}%
+%  \protected@edef\@currentlabel{#1#2}%
+% }
+% {%
+%  \end{assumption*}
+%}
+ 
 \begin{document}
-\maketitle
+\begin{frontmatter}
+	
+\title{Shared Decision-Making and Adaptive Output-Feedback Control for UAV Anomaly Mitigation}
 
-\section{Aircraft Model}
-The aircraft model used is a very flexible aircraft (VFA) model developed by Gibson \textit{et al.} \cite{gibson2011}, as shown in Figure \ref{fig:vfa}. 
+%\thanks[footnoteinfo]{Sponsor and financial support acknowledgment
+%goes here. Paper titles should be written in uppercase and lowercase
+%letters, not all uppercase.}
+
+\author[First]{Benjamin T. Thomsen} 
+\author[First]{Anuradha M. Annaswamy} 
+
+\address[First]{Massachusetts Institute of Technology, 
+   Cambridge, MA 02139\\email: [thomsen, aanna]@mit.edu}
+
+\begin{abstract}
+This paper outlines a shared decision-making and control framework to recover control performance following anomalous changes in plant dynamics. Autonomous model-based controllers, including model reference adaptive control, rely on accurate modeling of dynamical systems and make assumptions about the relative time constants of unmodeled dynamics. Online changes to these unmodeled dynamics may cause degraded command tracking performance and a loss of stability. We introduce a shared control architecture in which a human supervisor (operator) may make suitable changes to the control model of the system following anomalous plant behavior to allow for continued autonomous adaptive control without transferring control responsibilities to the human operator.
+\end{abstract}
+\begin{keyword}
+Five to ten keywords, preferably chosen from the IFAC keyword list.
+\end{keyword}
+
+\end{frontmatter}
+
+\section{Introduction}
+%Adaptive control and modeling assumptions.
+Model-based feedback control techniques, where control design is carried out based on \textit{a priori} knowledge of system dynamics, have become ubiquitous in industries such as aerospace, due to their ability to specify characteristics of the closed-loop system dynamics, ensure stability, and provide optimality over a range of operating conditions. The field of adaptive control (MRAC) addresses a limitation of control based on models of plant dynamics, namely that the parameters used to model dynamical systems will always have a degree of uncertainty in them. Model reference adaptive control, as described by \cite{narendra2012stable}, accommodates these parametric uncertainties through online tuning of control parameters to ensure specified closed-loop dynamics are realized. Recent advances in MRAC have included the development of closed-loop reference models (CRMs) by \cite{gibson2013adaptive}, which greatly improves transient performance during online learning. While adaptive control is able to guarantee stability and tracking convergence in the presence of parametric uncertainties, other aspects of the system -- such as its order -- are assumed to be known \textit{a priori} for control design.
+
+%Human pilots and operators, and their struggles with unfamiliar, off-nominal dynamics.
+Human operators of dynamical systems also develop mental models of the dynamics of the systems which they are controlling, often over long periods of active learning. Human pilots have been studied extensively to examine their learning processes and ability to adapt their control strategies to unfamiliar situations. When unexpected changes occur during operation, however, it is often difficult for human operators to learn the new dynamics in the time period necessary to avoid loss of control. Numerous aircraft accidents have involved pilot error following a transition from autonomous to manual control. Studies of human pilot behavior have repeatedly demonstrated how pilots operating in stressful situations controlling unfamiliar dynamics resort to applying high control gains, which can lead to a loss of stability margins and exceedence of the aircraft flight envelope. 
+
+%HALE VFA.
+Solar-electric high altitude long endurance (HALE) aircraft concepts have recently received heavy attention as key enabling technologies has advanced to allow for feasible months-long unmanned operation of these aircraft. These concepts, such as the NASA/AeroVironment Helios, sacrifice structural rigidity to decrease vehicle mass, and are thus classified as very flexible aircraft (VFA). For additional mass reductions, it may be desirable to use small actuators which introduce slow dynamics which must be accounted for in control design. The benefits derived from weight savings in HALE VFA platforms -- and the fact that they are unmanned -- may lead to designs with more modeling uncertainties and potential for online variations in dynamics.
+
+\section{Problem Statement}\label{sec:problem}
+%Control of plant with unknown/uncertain parameters. 
+We consider control design for a linear multi-input multi-output (MIMO) plant model of the form
+\begin{equation}
+\begin{gathered}
+\dot x_p = (A_p + B_p \Theta_p^T) x_p + B_p \Lambda_p u_p \\
+y_p = C_p x_p, \qquad z_p = C_{pz} x_p \label{eq:plant_dynamics}
+\end{gathered}
+\end{equation}
+where uncertain dynamics lead to the introduction of unknown $\Theta_p$ and $\Lambda_p$ in the plant model, $y_p$ are measurement outputs, and $z_p$ are regulated (tracking) outputs. It is assumed that the plant has uniform relative degree unity (matrix $CB$ has full rank), and in addition to the dynamics (\ref{eq:plant_dynamics}), the vehicle's actuators are modeled by the first-order dynamics
+\begin{equation}
+	\dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u \label{eq:first_order_act}
+\end{equation}
+where $D_1$ is a diagonal matrix representing nominal actuator parameters and $\Theta_1$ models uncertainty in the actuator dynamics. Model reference adaptive control (MRAC) with output feedback and closed-loop reference models, as described by \cite{qu2016adaptive}, can achieve asymptotic tracking and guarantee stability for this control problem. 
+
+The scenario motivating this paper is a sudden change in actuator dynamics during operation from (\ref{eq:first_order_act}) to the second-order model
+\begin{equation}
+	\ddot{u}_p + (D_2 + \Theta_2^T) \dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u \label{eq:second_order_act}
+\end{equation}
+This introduction of unmodeled dynamics means that the assumptions used for control design no longer hold, and the autonomous controller may lose stability and command tracking ability. The problem becomes how can autonomous control methodologies be used in conjunction with a remote human supervisor (of a fleet, perhaps, as illustrated in Fig. \ref{fig:uav_supervisor}) to successfully mitigate the anomalous dynamics and restore tracking performance in the presence of uncertainty. We refer to this class of anomaly response as a shared control response.
+
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\columnwidth]{../vfa.png}
+	\includegraphics[width=0.95\columnwidth]{../fig/uav_supervisor.pdf}
+	\caption{Supervisory operation of a fleet of HALE UAVs}
+	\label{fig:uav_supervisor}
+\end{figure}
+
+%Recovery of closed-loop autonomous control performance following the introduction of severe anomalous dynamics to the plant. 
+
+%Human supervisor is present (remotely), but should not be given control responsibilities following anomaly.
+
+\section{Shared Control}
+%Overview of shared control architecture. What is assumed?
+We introduce a shared decision-making and control framework which we posit will enable the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of unmodeled dynamics as described in the preceding section. This shared control framework is based on a combination of actions by UAV autopilots and remote human supervisors/operators. MRAC autopilots and complementary higher-level guidance functions allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators are constantly monitoring the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to potential communication delays and a weakened understanding of the vehicle dynamics and state due to the remote (not onboard) nature. Our shared control framework involves the use of the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. We will demonstrate how suitable adaptive autopilot functionalities allow for this possibility.
+
+%Division of responsibilities.
+
+\subsection{Adaptive Output-Feedback Control}\label{subsec:sc_adaptive}
+%An autonomous controller is designed  to track commands for vertical acceleration of the VFA while regulating the dihedral angle. The control goal for ``nominal'' operation is to design linear controllers which are able to:
+%\begin{enumerate}
+%	\item Accommodate errors and uncertainty in the nonlinear model which is trimmed and linearized for control design, which we model as state-dependent and input-dependent parametric uncertainties in the linearized system
+%	\item Account for slow first-order linear actuators dynamics with uncertainty in the DC gain and bandwidth (also captured as parametric uncertainties in the linearized system)
+%\end{enumerate}
+%using measurements of the pitch rate, dihedral angle, and vertical acceleration only. To accomplish these goals, we develop the ``nominal'' controller with the following components.
+%\begin{enumerate}
+%	\item A baseline control design using the linear quadratic regulator method with feedback on integrated tracking error (LQR-PI)
+%	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
+%\end{enumerate}
+%
+%The adaptive controller uses a \textit{closed-loop reference model} (CRM) for model following, which functions simultaneously as an observer for the baseline LQR-PI control, as described in \cite{lavretsky2015robust}.
+An autonomous controller is designed  to track commands for vertical acceleration of the VFA while regulating the dihedral angle. To achieve the control goals stated in Section \ref{sec:problem} (namely the state-dependent and input-dependent parametric uncertainties in the plant as well as the actuator dynamics with uncertain parameters), we develop the ``nominal'' controller with the following components.
+\begin{enumerate}
+	\item A baseline control design using the linear quadratic regulator method with feedback on integrated tracking error (LQR-PI)
+	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
+\end{enumerate}
+The shared control framework involves separate MRAC designs for the plant (\ref{eq:plant_dynamics}) in combination with actuator dynamics (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:first_order_act}) is the ``nominal'' control design, and excluding exceptional failures, this is the controller in use by the UAV autopilot. The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:second_order_act}) is a predefined ``mitigating'' controller, whose use case will be defined more fully in Section \ref{subsec:sc_human}.
+
+Both of these control designs use an augmented linear plant formulation, where the plant (\ref{eq:plant_dynamics}) is extended with the linear actuator dynamics -- either (\ref{eq:first_order_act}) or (\ref{eq:second_order_act}) -- as well as integrated tracking errors 
+\begin{equation}
+	e_z^{\mathcal{I}}(t) = \int_0^{t} \big( z_p(\tau) - z_{cmd}(\tau)\big) d\tau
+\end{equation}
+
+The augmented plant model with $x = \begin{bmatrix} x_p^T & x_{act}^T & (e_z^{\mathcal{I}})^T\end{bmatrix}^T$ can written compactly as
+\begin{equation}
+\begin{array}{c}
+\dot{x}= \left(A+B_{1}\Psi_{1}^{T}+B_{r}\Psi_{r}^{T}\right) x+B_{r}\Lambda u+B_{z}z_{cmd}\\
+y=Cx,\qquad z=C_{z}x
+\end{array} \label{eq:augmented_plant}
+\end{equation}
+where $x\in\mathbb{R}^{n}$, $u\in\mathbb{R}^{m}$, $y\in\mathbb{R}^{p}$ are redefined states, inputs and outputs, respectively. A full justification for this form of the plant can be found in \cite{qu2016phd, qu2016adaptive}. This plant contains unknown matrices $\Psi_1$, $\Psi_r$, and $\Lambda$, which hold the state-dependent plant uncertainties, state-dependent actuator dependencies, and actuator effectiveness, respectively. The exact forms of $B_r$ and $\Psi_r$ depend on whether the actuators are first-order (\ref{eq:first_order_act}) or second-order (\ref{eq:second_order_act}), and the subscript $r$ indicates the relative degree of the augmented plant.
+
+For control design, closed-loop reference models are designed as
+\begin{equation}
+\dot{x}_m = A_m x_m + B_z z_{cmd} + L e_y + \mathcal{F}_r(t), \quad y_m = C x_m
+\end{equation}
+where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a nominal Luenberger-like feedback gain designed for the system without uncertainty, using the linear quadratic regulator servomechanism (LQR-PI) design method, and $\mathcal{F}_r(t)$ is a function which changes depending on the actuator model used. For sake of brevity, readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for full derivations of the adaptive controllers used in this article. In what follows, we will summarized the design for the ``nominal'' controller and for the ``mitigating'' controller, and assume the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$) for simplicity.
+ 
+%This augmented model is defined by nominal state, input, and output matrices
+%\begin{equation}  \small
+%\begin{aligned}
+%	A &= \begin{bmatrix}
+%		\begin{matrix} A_p \\ 0 \\ C_{pz}	
+%		\end{matrix}
+%		& \begin{bmatrix}
+%		\begin{matrix} B_p & 0 \end{matrix} \\
+%		A_{act} \\
+%		0 \end{bmatrix}
+%		 & \begin{matrix} 0 \\ 0 \\ 0 \end{matrix}
+%	\end{bmatrix}\\
+%	B_1 &=
+%	\begin{bmatrix}
+%		B_p \\ 0 \\ 0
+%	\end{bmatrix}, \quad B_r = 
+%	\begin{bmatrix}
+%		0\\ B_{act} \\ 0
+%	\end{bmatrix}, \quad B_z = \begin{bmatrix}
+%		0 \\ 0 \\ -I
+%	\end{bmatrix} \\
+%	C &= \begin{bmatrix}
+%	C_{p} & 0 & 0\\
+%	0 & 0 & I
+%	\end{bmatrix}, \quad C_z = \begin{bmatrix}
+%	C_{pz} & 0 & 0\end{bmatrix}
+%\end{aligned}
+%\end{equation}
+%as well as uncertainty matrices given by
+%\begin{equation} \small
+%\Psi_{1}=\begin{bmatrix}
+%\Theta_{p} \\ 0 \\ 0 \end{bmatrix}, \quad
+%\Psi_{r}= -\begin{bmatrix} 0 \\ \begin{bmatrix}\Theta_1^{T} & \cdots & \Theta_k^{T} \end{bmatrix}^T \\ 0\end{bmatrix} (D_1)^{-1} 
+%\end{equation}
+
+\subsubsection{Nominal Adaptive Control Design}
+%Relative degree two MIMO adaptive control.
+% need a11, a10, B_1^a, Cbar, S, Rinv, epsilon, L, two tuner laws, u, F
+The control design for the plant with first-order actuator dynamics will be summarized by giving definitions for feedback gain $L$, function $\mathcal{F}_2(t)$, control law $u$, and parameter adaptation. First, we will use $B_2$ to denote $B_r$ from (\ref{eq:augmented_plant}) for this relative degree two plant. The feedback matrix $L$ is designed by defining relative degree 1 input path
+\begin{equation}
+B_1^a = \alpha_0 B_2 + \alpha_1 A B_2 \label{eq:rd2-b1a}
+\end{equation}
+where $\alpha_i > 0$ are free design parameters. We then define
+\begin{align}
+S &= (C B_1^a)^T \label{eq:S}\\	\overline{C} & = S C\\ R^{-1} &= (\overline{C} B_1^a)^{-1} \big[ \overline{C} A B_1^a + (\overline{C} A B_1^a)^T\big] (\overline{C} B_1^a)^{-1} + \epsilon I \\ L & = B_1^a R^{-1} S \label{eq:L}
+\end{align}
+where $\epsilon > 0$ is a gain defined in \cite[Eq. 30]{qu2015adaptive}. 
+
+The function $\mathcal{F}_2(t)$ makes use of scaled error signal
+\begin{equation}
+	e_{sy}(t) = R^{-1} S e_y(t) \label{eq:esy}
+\end{equation}
+and a filtered version of this signal, $\overline{e}_{sy}(t)$, given in the form of a differential equation as
+\begin{equation}
+(\alpha_0 + \alpha_1 \frac{d}{dt}) \big\{ \overline{e}_{sy}(t) \big\} = \alpha_1 e_{sy}(t) \label{eq:e_sy_bar}
+\end{equation}
+The function is then defined as
+\begin{equation}
+\mathcal{F}_2(t) = B_2 (\alpha_0 + \alpha_1 \frac{d}{dt})\big\{ \hat{\Psi}_m^T (t) \bar{e}_{sy}(t) \big\}
+\end{equation}
+where $\hat{\Psi}_m(t)$ is a matrix of adaptive parameters, defined more fully in \cite{qu2016adaptive}. Similar to (\ref{eq:e_sy_bar}), we define filtered reference model state, $\overline{x}_m(t)$, with the differential equation
+\begin{equation}
+(\alpha_0 + \alpha_1 \frac{d}{dt}) \big\{ \overline{x}_{m}(t) \big\} = \alpha_1 x_{m}(t) \label{eq:xm_bar}
+\end{equation}
+
+We define a regressor vector 
+\begin{equation}
+\mathcal{X}(t) = \big[ (K^T \overline{x}_m)^T,\quad x_m^T,\quad \overline{x}_m^T \big]^T
+\end{equation}
+and control law, $u(t)$, is then given by
+\begin{equation}
+u = - (\alpha_0 + \alpha_1 \frac{d}{dt}) \big \{ \hat{\Psi}_{\Lambda}^T (t) \mathcal{X}(t) \big\}	
+\end{equation}
+where $\hat{\Psi}_{\Lambda}(t)$ is a matrix of adaptive parameters, defined more completely in \cite{qu2016adaptive}. The laws for adaptation of matrices $\hat{\Psi}_m(t)$ and $\hat{\Psi}_{\Lambda}(t)$ are given by
+\begin{equation}
+\begin{aligned}
+	\dot{\hat{\Psi}}_m(t) &= \Gamma_{m} \overline{e}_{sy}(t) e_y^T(t) S^T \\
+	\dot{\hat{\Psi}}_{\Lambda}(t) &= -\Gamma_{\Lambda} \mathcal{X}(t) e_y^T (t) S^T
+\end{aligned}
+\end{equation}
+with diagonal adaptation gains $\Gamma_{m}, \Gamma_{\Lambda} > 0$.
+
+\subsubsection{Mitigating Adaptive Control Design}
+Control design with the second-order actuator model is similar to that described above. The definition of $L$ is modified by replacing $B_1^a$ in (\ref{eq:rd2-b1a}) with
+\begin{equation}
+B_1^a = \alpha_0 B_3 + \alpha_1 A B_3 + \alpha_2 A^2 B_3 \label{eq:rd3-b1a}
+\end{equation}
+and proceeding with (\ref{eq:S})--(\ref{eq:L}). A definition for $\epsilon>0$ in this case can be found in \cite{qu2016phd}. The definition of $\mathcal{F}_3(t)$ will utilize several filtered error quantities, namely
+\begin{equation} \small
+\begin{aligned} 
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[1]}(t) \big \} & = (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ e_{sy}(t) \big \} \\
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[2]}(t) \big \} & = \alpha_2 e_{sy}(t) \\
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[1][2]}(t) \big \} & = (\alpha_2 \frac{d}{dt}) \big \{ \hat{\phi}_1^T(t) \bar{e}_{sy}^{[1]}(t) \big \}
+\end{aligned}	
+\end{equation}
+where $e_{sy}(t)$ was defined in (\ref{eq:esy}), $\hat{\phi}_1(t)$ is a vector of adaptive parameters, and $\alpha_i > 0$ are again free design parameters. We must also define the integrated and scaled measurement output error, 
+\begin{equation}
+e_{y}^{\mathcal{I}}(t) = \int_0^{t} L\big (y(\tau) - y_m(\tau)\big) d\tau
+\end{equation}
+which is used to create the filtered error signals
+\begin{equation} \small
+\begin{aligned}
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \} &= (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T (t) e_{y}^{\mathcal{I}}(t) \big \} \\
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big \} &= (\alpha_2 \frac{d}{dt}) \big \{ \hat{\Lambda}(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \}
+\end{aligned}	
+\end{equation}
+where $\hat{\Phi}_1(t)$ and $\hat{\Lambda}(t)$ are matrices of adaptive parameters. We define the shorthand notations
+\begin{equation}
+\begin{aligned}
+	f_a \{ \cdot \} &= \big(\alpha_0 \alpha_2 B_3 + (\alpha_1 B_3 + \alpha_2 A B_3)\frac{d}{dt} \big) \{ \cdot \} \\
+	f_b \{ \cdot \} &= \alpha_2 B_3 \big(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} \big) \{ \cdot \}
+\end{aligned}
+\end{equation}
+and use these to define
+\begin{multline}
+	\mathcal{F}_3(t) = f_a \big \{ \hat{\phi}_1^T(t) \overline{e}_{sy}^{[1]}(t) - \hat{\Lambda}^T(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \} \\
+	+ f_b \big \{ \hat{\phi}_1^T(t) \big[\overline{e}_{sy}^{[1][2]}(t) -  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big ] + \hat{\phi}_2^T (t) \overline{e}_{sy}^{[2]}(t) \big \}
+\end{multline}
+where $\hat{\phi}_2(t)$ is an additional vector of adaptive parameters. We define filtered reference model states $\overline{x}_m^{[1]}$ and $\overline{x}_m^{[2]}$ as
+\begin{equation}
+\begin{aligned}
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{x}_{m}^{[1]} (t) \big \} &= (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ x_m (t) \big \} \\
+	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{x}_{m}^{[2]}(t) \big \} &= \alpha_2 x_m (t)
+\end{aligned}	
+\end{equation}
+
+We also define variable $\overline{v}_m(t)$ with artificial time derivatives, such that
+\begin{equation}
+\begin{gathered}
+	\overline{v}_m = x_m, \quad \frac{d}{dt}\overline{v}_m  = A x_m + B_z z_{cmd} \\
+	\frac{d^2}{dt^2} \overline{v}_m = A^2 x_m + A B_z z_{cmd} + B_z \frac{d}{dt} \{ z_{cmd} \} - A L e_y
+\end{gathered}
+\end{equation}
+We redefine the regressor vector
+\begin{equation}
+\mathcal{X}(t) = \big[ (K^T \overline{x}_m^{[2]})^T,\quad \overline{v}_m^T,\quad \overline{x}_m^{[1]T},\quad \overline{x}_m^{[2]T} \big]^T
+\end{equation}
+and we are then able to set the control law as
+\begin{multline}
+	u (t) = -(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} ) \big \{ \hat{\Psi}^T(t) \mathcal{X}(t) \big \} \\ -  (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T(t) \big \} e_y^\mathcal{I} (t)
+\end{multline}
+where 
+\begin{equation}
+\hat{\Psi}(t) = \big[ \hat{\Upsilon}(t)^T,\quad \hat{\Phi}_1^T(t),\quad \hat{\Phi}_2^T(t),\quad \hat{\Phi}_3^T(t) \big]^T 
+\end{equation}
+is a matrix of adaptive parameters. In this controller, the laws for parameter adaptation use high-order tuners as in \cite{qu2016phd}. We first define regressor vectors $\xi(t)$ and $\nu(t)$ as
+\begin{equation}
+	\xi(t) = \begin{bmatrix}
+		K^T \overline{x}_m^{[2]} \\ x_m \\ \overline{x}_m^{[1]} \\ \overline{x}_m^{[2]}
+	\end{bmatrix}, \quad \nu(t) = \begin{bmatrix}
+		\overline{e}_{\mathcal{I}y}^{[1][2]} - \overline{e}_{sy}^{[1]} - \overline{e}_{sy}^{[1][2]} \\ -\overline{e}_{sy}^{[2]} \\ \overline{e}_{\mathcal{I}y}^{[1]}
+	\end{bmatrix}
+\end{equation}
+and 
+\begin{equation}
+\hat{\Theta}(t) = \big[ \hat{\phi}_1^T(t),\quad \hat{\phi}_2^T(t),\quad \hat{\Lambda}^T(t) \big]
+\end{equation}
+as a second matrix of adaptive parameters. Adaptation is then carried out as follows
+\begin{equation}
+\begin{aligned}
+\dot{\hat{\Psi}}'(t) &= \Gamma \xi (S e_y)^T \text{sgn}(\Lambda) \\
+\dot{\hat{\Theta}}'(t) &= -\Gamma \nu (S e_y)^T 
+\end{aligned}
+\end{equation}
+and the desired adaptive parameters are outputs of the tuners
+\begin{equation}
+\begin{aligned}
+	\dot{X}_{\hat{\Psi}}(t) &= \big( A_T X_{\hat{\Psi}} + B_T (\hat{\Psi}'(t))^T \big) g(\xi, \mu_{\xi}) \\
+	\hat{\Psi}(t) &= (C_T X_{\hat{\Psi}})^T \\
+	\dot{X}_{\hat{\Theta}}(t) &= \big( A_T X_{\hat{\Theta}} + B_T (\hat{\Theta}'(t))^T \big) g(\nu, \mu_{\nu}) \\
+	\hat{\Theta}(t) &= (C_T X_{\hat{\Theta}})^T
+\end{aligned}	
+\end{equation}
+where
+\begin{equation}
+g(\mathbf{x}, \mu) = 1 + \mu \mathbf{x}^T \mathbf{x}	
+\end{equation}
+is a time-varying gain with scalar gain $\mu$ described in \cite{qu2016phd}. $A_T \in \mathbb{R}^{2m \times 2m}$, $B_T \in \mathbb{R}^{2m \times m}$, and $C_T \in \mathbb{R}^{m \times 2m}$ are block diagonal matrices with diagonal blocks
+\begin{equation}
+A_{T,i} = \begin{bmatrix}
+	0 & 1\\ -\frac{\alpha_0}{\alpha_2} & -\frac{\alpha_1}{\alpha_2}
+\end{bmatrix}, \quad B_{T,i} = \begin{bmatrix}
+	0 \\ \frac{\alpha_0}{\alpha_2}
+\end{bmatrix}, \quad C_{T,i} = \begin{bmatrix}
+	1 & 0
+\end{bmatrix}
+\end{equation}
+
+Derivatives of the adaptive parameters are given by
+\begin{equation}
+\begin{aligned}
+	\dot{\hat{\Psi}}(t) &= (C_T^\delta X_{\hat{\Psi}})^T, \qquad \ddot{\hat{\Psi}}(t) &= (C_T^{\delta\delta}X_{\hat{\Psi}})^T \\
+	\dot{\hat{\Theta}}(t) &= (C_T^\delta X_{\hat{\Theta}})^T, \qquad \ddot{\hat{\Theta}}(t) &= (C_T^{\delta\delta}X_{\hat{\Theta}})^T
+\end{aligned}
+\end{equation}
+where $C_T^{\delta}$ and $C_T{\delta \delta}$ are block diagonal matrices with diagonals $C_{T,i}^{\delta} = \begin{bmatrix} 0,~ & 1	\end{bmatrix}$ and $C_{T,i}^{\delta\delta} = -\frac{1}{\alpha_2}\begin{bmatrix} \alpha_0,~ & \alpha_1 \end{bmatrix}$. 
+
+\subsection{Human Supervisor}\label{subsec:sc_human}
+Notices, reacts, instructs.
+
+\section{Application to HALE VFA}
+\subsection{Aircraft Model}
+The aircraft model used is a very flexible aircraft (VFA) model developed by \cite{gibson2011modeling}, as shown in Figure \ref{fig:vfa}. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.95\columnwidth]{../fig/VFA_16.jpg}
 	\caption{Rendering of very flexible aircraft model}
 	\label{fig:vfa}
 \end{figure}
@@ -86,25 +401,11 @@ This nonlinear VFA model is augmented with a linear actuator model so that slow 
 	\label{fig:trim-inputs}
 \end{figure}
 
-\section{Nominal Control Design}
-An autonomous controller is designed  to track commands for vertical acceleration of the VFA while regulating the dihedral angle. The control goal for ``nominal'' operation is to design linear controllers which are able to:
-\begin{enumerate}
-	\item Accommodate errors and uncertainty in the nonlinear model which is trimmed and linearized for control design, which we model as state-dependent and input-dependent parametric uncertainties in the linearized system
-	\item Account for slow first-order linear actuators dynamics with uncertainty in the DC gain and bandwidth (also captured as parametric uncertainties in the linearized system)
-\end{enumerate}
-using measurements of the pitch rate, dihedral angle, and vertical acceleration only. To accomplish these goals, we develop the ``nominal'' controller with the following components.
-\begin{enumerate}
-	\item A baseline control design using the linear quadratic regulator method with feedback on integrated tracking error (LQR-PI)
-	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
-\end{enumerate}
+\subsection{Shared Control}
+A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft, first proposed in \cite{thomsen2018shared}. In the following simulation, we demonstrate an example of how this is possible.
 
-The adaptive controller uses a \textit{closed-loop reference model} (CRM) for model following, which functions simultaneously as an observer for the baseline LQR-PI control \cite{lavretsky2015}.
-
-\section{Shared Controller}
-A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft \cite{thomsen2018}. In the following simulation, we demonstrate an example of how this is possible.
-
-\section{Numerical Simulation}
-In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (LQR-PI + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by Qu \cite{qu2016}.
+\subsection{Numerical Simulation}
+In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (LQR-PI + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by \cite{qu2016phd}.
 
 There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \leq t < 600 s$, the vehicle operates in nominal operation with the adaptive controller and baseline LQR-PI control design. At $t = 600 s$, a failure causes the vehicle's actuators to change from first-order to second-order. For $600 \leq t < 800 s$, the ``nominal'' controller is attempting to control the system which has severe unmodeled dynamics. In the shared control framework, the human operator notices that this closed-loop behavior is anomalous, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance.
 
@@ -122,7 +423,5 @@ There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \
 	\label{fig:err}
 \end{figure}
 
-
-\bibliographystyle{IEEEtran}
 \bibliography{thomsen-cphs-2018-bib}
 \end{document}

@@ -274,7 +274,7 @@ classdef SimVFA < handle
             vfa.pltOpt.legfontsize = 12;
             vfa.pltOpt.fontsize = 14;
             vfa.pltOpt.weight = 'n';
-            vfa.pltOpt.fontname = 'cmr12';
+            vfa.pltOpt.fontname = 'Times New Roman';
         end
         
         function trimAC(vfa, loadTrim, saveTrim, pltTrim)

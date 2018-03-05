@@ -151,19 +151,23 @@ dihedral = (180/pi) * [SOO1.z(1,1:ind1), SOO2.z(1,1:ind2), SOO3.z(1,:)] + vfa1.s
 vert_acc = [SOO1.z(2,1:ind1), SOO2.z(2,1:ind2), SOO3.z(2,:)];
 out_ail  = (180/pi) * [SOO1.u_p(1,1:ind1), SOO2.u_p(1,1:ind2), SOO3.u_p(1,:)];
 in_elev  = (180/pi) * [SOO1.u_p(2,1:ind1), SOO2.u_p(2,1:ind2), SOO3.u_p(2,:)];
+
+u_ail  = (180/pi) * [SOO1.u_ad(1,1:ind1), SOO2.u_ad(1,1:ind2), SOO3.u_ad(1,:)];
+u_elev = (180/pi) * [SOO1.u_ad(2,1:ind1), SOO2.u_ad(2,1:ind2), SOO3.u_ad(2,:)];
+
 time = [SOO1.t_sim(1:ind1); SOO2.t_sim(1:ind2); SOO3.t_sim];
 err_norm = [vecnorm(squeeze(SOO1.y(:,:,1:ind1)-SOO1.ym(:,:,1:ind1))), vecnorm(squeeze(SOO2.y(:,:,1:ind2)-SOO2.ym(:,:,1:ind2))), vecnorm(squeeze(SOO3.y-SOO3.ym))];
+err_norm2 = [vecnorm(squeeze(SOO1.z(:,:,1:ind1)-SOO1.r_cmd(:,:,1:ind1))), vecnorm(squeeze(SOO2.z(:,:,1:ind2)-SOO2.r_cmd(:,:,1:ind2))), vecnorm(squeeze(SOO3.z-SOO3.r_cmd))];
 
 %% Plotting: state and control
 
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); 
 set(groot, 'defaultLegendInterpreter','latex');
 
-% c2 = [0.85, 0.325, 0.098];
 c2 = [0.466, 0.674, 0.188];
 
-f = figure('Position',[1,1, 1000, 600]);
-subplot(4,1,1)
+f1a = figure('Position',[1,1, 800,400]);
+subplot(2,2,1)
 plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5)
 hold on; grid on; 
 plot(time, dihedral, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
@@ -176,7 +180,7 @@ h=legend('Command', 'Output');
 set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,2)
+subplot(2,2,2)
 plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1.5)
 hold on; grid on; 
 plot(time, vert_acc, 'LineWidth', 1.5, 'LineStyle', '-', 'Color', c2)
@@ -187,39 +191,45 @@ line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 
 title('Vertical Accel (ft/s^2)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,3)
+subplot(2,2,3)
 plot(time, out_ail, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
 xlim([0 tsim])
-ylim([-1 5])
+ylim([0 3])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
-title('Outer Aileron (deg)')
+title('Outer Aileron Command (deg)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
 
-subplot(4,1,4)
+subplot(2,2,4)
 plot(time, in_elev, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
 xlim([0 tsim])
-ylim([-4 1])
+ylim([-3 0])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
-title('Center Elevator (deg)')
+title('Center Elevator Command (deg)')
 xlabel('Time (s)')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+% tightfig(f1a);
 
-tightfig(f);
 
 %% Plotting: error
 
-f2 = figure('Position',[1,1, 1000, 220]);
-plot(time, err_norm, 'LineWidth', 1.5, 'Color', [0, 0.447, 0.741]); grid on; hold on;
+f2 = figure('Position',[1,1, 800, 240]);
+yyaxis left
+plot(time, err_norm, 'LineWidth', 1.5); grid on; hold on;
 xlim([0 tsim])
-ylim([0 3e-3])
-line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
-line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
-title('Model-Following Output Error: $\|e_y(t)\|_2$', 'interpreter','latex')
+ylim([0 4e-3])
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1, 'HandleVisibility', 'off');
+line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1, 'HandleVisibility', 'off');
+yyaxis right
+plot(time, err_norm2, 'LineWidth', 1.5, 'Color', c2); grid on; hold on;
+ylim([0 15])
+title('Output Error Signals: $\|y(t)-y_m(t)\|_2$ and $\|z(t)-z_{cmd}(t)\|_2$', 'interpreter','latex')
 xlabel('Time (s)')
+h=legend('$\|y(t)-y_m(t)\|_2$', '$\|z(t)-z_{cmd}(t)\|_2$');
+set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
-tightfig(f2);
+% tightfig(f2);
 
 %% Data concatenation for adaptive parameters
 
@@ -242,10 +252,10 @@ for i=1:ind2
     norm_psi21_ada(ind1+i) = norm(SOO2.psi21_ada(:,:,i));
 end
 
-norm_lambda_ada = norm_lambda_ada/norm_lambda_ada(end);
-norm_psi1_ada   = norm_psi1_ada/norm_psi1_ada(end);
-norm_psi2_ada   = norm_psi2_ada/norm_psi2_ada(end);
-norm_psi21_ada  = norm_psi21_ada/norm_psi21_ada(end);
+norm_lambda_ada = norm_lambda_ada/norm_lambda_ada(ind1);
+norm_psi1_ada   = norm_psi1_ada/norm_psi1_ada(ind1);
+norm_psi2_ada   = norm_psi2_ada/norm_psi2_ada(ind1);
+norm_psi21_ada  = norm_psi21_ada/norm_psi21_ada(ind1);
 
 norms_1 = [norm_lambda_ada, norm_psi1_ada, norm_psi2_ada, norm_psi21_ada];
     
@@ -283,8 +293,8 @@ figure('Position',[100,100, 800, 400]);
 plot(time(1:ind1+ind2), norms_1, 'LineWidth', 1); grid on; hold on;
 plot(time(ind1+ind2+1:end), norms_2, 'LineWidth', 1);
 xlim([0 tsim]);
-ylim([0 1.2]);
-title('Normalized Learned Parameters')
+ylim([0 4]);
+title('Normalized Learned Parameters', 'interpreter', 'latex')
 xlabel('Time (s)')
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
 line([SOO2.t_sim(ind2) SOO2.t_sim(ind2)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
@@ -292,3 +302,113 @@ h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\unde
          '$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_3^1\|$', '$\|\psi_3^2\|$', '$\|\underline{\Psi}_3\|$');
 set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
 set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+
+%% Bonus: VFA1 and VFA2 until loss of stability
+
+SOO.t_sim(1:ind1) = vfa1.simOutObj.t_sim(1:ind1);
+SOO.t_sim(ind1+1:length(vfa2.simOutObj.t_sim)+ind1) = vfa2.simOutObj.t_sim;
+
+SOO.z(:,:,1:ind1) = vfa1.simOutObj.z(:,:,1:ind1);
+SOO.z(:,:,ind1+1:ind1+length(vfa2.simOutObj.t_sim)) = vfa2.simOutObj.z(:,:,:);
+SOO.u_p(:,:,1:ind1) = vfa1.simOutObj.u_p(:,:,1:ind1);
+SOO.u_p(:,:,ind1+1:ind1+length(vfa2.simOutObj.t_sim)) = vfa2.simOutObj.u_p(:,:,:);
+
+c2 = [0.466, 0.674, 0.188];
+
+figure('Position',[1,1, 800, 400]);
+subplot(2,2,1)
+plot(SOO1.t_sim, SOO1.r_cmd(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5)
+hold on; grid on; plot(SOO.t_sim, SOO.z(1,:)*180/pi + vfa1.simOpt.eta_nom, 'LineWidth', 1.5, 'Color', c2)
+xlim([0 tsim])
+ylim([9 13])
+line([SOO.t_sim(ind1) SOO.t_sim(ind1)], ylim, 'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Dihedral (deg)')
+h=legend('Command', 'Output');
+set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+subplot(2,2,2)
+plot(SOO1.t_sim, SOO1.r_cmd(2,:), 'LineWidth', 1.5)
+hold on; grid on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1.5, 'Color', c2)
+xlim([0 tsim])
+ylim([-3 3])
+line([SOO.t_sim(ind1) SOO.t_sim(ind1)], ylim, 'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Vertical Accel (ft/s^2)')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+subplot(2,2,3)
+plot(SOO.t_sim, SOO.u_p(1,:)*180/pi, 'LineWidth', 1.5); grid on;
+xlim([0 tsim])
+ylim([0 3])
+line([SOO.t_sim(ind1) SOO.t_sim(ind1)], ylim, 'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Outer Aileron (deg)')
+xlabel('Time (s)')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+subplot(2,2,4)
+plot(SOO.t_sim, SOO.u_p(2,:)*180/pi, 'LineWidth', 1.5); grid on;
+xlim([0 tsim])
+ylim([-3 0])
+line([SOO.t_sim(ind1) SOO.t_sim(ind1)], ylim, 'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Center Elevator (deg)')
+xlabel('Time (s)')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+
+norm_lambda_ada = zeros(ind1 + length(vfa2.simOutObj.t_sim), 1);
+norm_psi1_ada   = zeros(ind1 + length(vfa2.simOutObj.t_sim), 1);
+norm_psi2_ada   = zeros(ind1 + length(vfa2.simOutObj.t_sim), 1); 
+norm_psi21_ada = zeros(ind1 + length(vfa2.simOutObj.t_sim), 1);
+
+for i=1:ind1
+    norm_lambda_ada(i) = norm(SOO1.lambda_ada(:,:,i));
+    norm_psi1_ada(i) = norm(SOO1.psi1_ada(:,:,i));
+    norm_psi2_ada(i) = norm(SOO1.psi2_ada(:,:,i));
+    norm_psi21_ada(i) = norm(SOO1.psi21_ada(:,:,i));
+end
+
+for i=1:length(vfa2.simOutObj.t_sim)
+    norm_lambda_ada(ind1+i) = norm(SOO2.lambda_ada(:,:,i));
+    norm_psi1_ada(ind1+i) = norm(SOO2.psi1_ada(:,:,i));
+    norm_psi2_ada(ind1+i) = norm(SOO2.psi2_ada(:,:,i));
+    norm_psi21_ada(ind1+i) = norm(SOO2.psi21_ada(:,:,i));
+end
+
+norm_lambda_ada = norm_lambda_ada/norm_lambda_ada(ind1);
+norm_psi1_ada   = norm_psi1_ada/norm_psi1_ada(ind1);
+norm_psi2_ada   = norm_psi2_ada/norm_psi2_ada(ind1);
+norm_psi21_ada  = norm_psi21_ada/norm_psi21_ada(ind1);
+
+norms_1 = [norm_lambda_ada, norm_psi1_ada, norm_psi2_ada, norm_psi21_ada];
+    
+figure('Position',[100,100, 800, 240]);
+plot(time(1:ind1+length(vfa2.simOutObj.t_sim)), norms_1, 'LineWidth', 1.5); grid on; hold on;
+xlim([0 tsim]);
+ylim([0 5]);
+line([SOO.t_sim(ind1) SOO.t_sim(ind1)], ylim, 'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1);
+title('Normalized Learned Parameters', 'interpreter', 'latex')
+xlabel('Time (s)')
+h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_{2}^1\|$', ...
+         '$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_3^1\|$', '$\|\psi_3^2\|$', '$\|\underline{\Psi}_3\|$');
+set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+
+
+err_norm_mis = [vecnorm(squeeze(SOO1.y(:,:,1:ind1)-SOO1.ym(:,:,1:ind1))), vecnorm(squeeze(SOO2.y(:,:,:)-SOO2.ym(:,:,:)))];
+err_norm_mis2 = [vecnorm(squeeze(SOO1.z(:,:,1:ind1)-SOO1.r_cmd(:,:,1:ind1))), vecnorm(squeeze(SOO2.z(:,:,:)-SOO2.r_cmd(:,:,:)))];
+
+f2 = figure('Position',[1,1, 800, 240]);
+yyaxis left
+plot(SOO.t_sim, err_norm_mis, 'LineWidth', 1.5); grid on; hold on;
+xlim([0 tsim])
+ylim([0 4e-3])
+line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1, 'HandleVisibility', 'off');
+yyaxis right
+plot(SOO.t_sim, err_norm_mis2, 'LineWidth', 1.5, 'Color', c2); grid on; hold on;
+title('Output Error Signals: $\|y(t)-y_m(t)\|_2$ and $\|z(t)-z_{cmd}(t)\|_2$', 'interpreter','latex')
+xlabel('Time (s)')
+h=legend('$\|y(t)-y_m(t)\|_2$', '$\|z(t)-z_{cmd}(t)\|_2$');
+set(h,'fontsize',vfa1.pltOpt.legfontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
+set(gca,'fontsize',vfa1.pltOpt.fontsize,'fontweight',vfa1.pltOpt.weight,'fontname',vfa1.pltOpt.fontname)
+% tightfig(f2);
