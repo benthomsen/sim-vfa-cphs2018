@@ -8,19 +8,6 @@
 \usepackage{natbib}
 %\usepackage[unicode=true]{hyperref}
 
-%\newtheorem*{assumption*}{\assumptionnumber}
-%\providecommand{\assumptionnumber}{}
-%\makeatletter
-%\newenvironment{assumption}[2]
-% {%
-%  \renewcommand{\assumptionnumber}{Assumption #1#2}%
-%  \begin{assumption*}%
-%  \protected@edef\@currentlabel{#1#2}%
-% }
-% {%
-%  \end{assumption*}
-%}
- 
 \begin{document}
 \begin{frontmatter}
 	
@@ -74,7 +61,11 @@ The scenario motivating this paper is a sudden change in actuator dynamics durin
 \begin{equation}
 	\ddot{u}_p + (D_2 + \Theta_2^T) \dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u \label{eq:second_order_act}
 \end{equation}
-This introduction of unmodeled dynamics means that the assumptions used for control design no longer hold, and the autonomous controller may lose stability and command tracking ability. The problem becomes how can autonomous control methodologies be used in conjunction with a remote human supervisor (of a fleet, perhaps, as illustrated in Fig. \ref{fig:uav_supervisor}) to successfully mitigate the anomalous dynamics and restore tracking performance in the presence of uncertainty. We refer to this class of anomaly response as a shared control response.
+This introduction of unmodeled dynamics means that the assumptions used for control design no longer hold, and the autonomous controller may lose stability and command tracking ability. 
+
+In addition to the autonomous controller which generates control input $u$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}), there is a human supervisor tasked with the high-level operation of the plant (\ref{eq:plant_dynamics}), including mission and task planning (commanding its mode of operation) and monitoring to ensure safe and anomaly-free operation. In this paper, we consider \textit{remote} human operators who cannot sense the vehicle state and dynamics directly through vestibular or somatosensory pathways. The human supervisor may be responsible for the supervision of multiple plant instances, as illustrated in Fig. \ref{fig:uav_supervisor} for the case of HALE VFA platforms. The remote human supervisor has information on vehicle measurement output, state, tracking performance, and health (via visual, tactile/haptic, and auditory interfaces), and is able to actuate the vehicle through the same pathways as the autonomous controller -- $u$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}) -- via remote controls. Both the sensing and actuation by the remote human supervisor include time delays $\tau_s, \tau_a > 0$.
+
+The problem we investigate is whether autonomous control methodologies can be used in conjunction with a remote human supervisor to successfully mitigate the anomalous dynamics (\ref{eq:second_order_act}) and restore tracking performance in the presence of uncertainty. We refer to this class of anomaly response as a shared control response.
 
 \begin{figure}[htbp]
 	\centering
@@ -108,7 +99,7 @@ We introduce a shared decision-making and control framework which we posit will 
 %The adaptive controller uses a \textit{closed-loop reference model} (CRM) for model following, which functions simultaneously as an observer for the baseline LQR-PI control, as described in \cite{lavretsky2015robust}.
 An autonomous controller is designed  to track commands for vertical acceleration of the VFA while regulating the dihedral angle. To achieve the control goals stated in Section \ref{sec:problem} (namely the state-dependent and input-dependent parametric uncertainties in the plant as well as the actuator dynamics with uncertain parameters), we develop the ``nominal'' controller with the following components.
 \begin{enumerate}
-	\item A baseline control design using the linear quadratic regulator method with feedback on integrated tracking error (LQR-PI)
+	\item A baseline control design using the robust servomechanism linear quadratic regulator method (RSLQR)
 	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
 \end{enumerate}
 The shared control framework involves separate MRAC designs for the plant (\ref{eq:plant_dynamics}) in combination with actuator dynamics (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:first_order_act}) is the ``nominal'' control design, and excluding exceptional failures, this is the controller in use by the UAV autopilot. The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:second_order_act}) is a predefined ``mitigating'' controller, whose use case will be defined more fully in Section \ref{subsec:sc_human}.
@@ -117,6 +108,7 @@ Both of these control designs use an augmented linear plant formulation, where t
 \begin{equation}
 	e_z^{\mathcal{I}}(t) = \int_0^{t} \big( z_p(\tau) - z_{cmd}(\tau)\big) d\tau
 \end{equation}
+in order to to use the RSLQR control design.
 
 The augmented plant model with $x = \begin{bmatrix} x_p^T & x_{act}^T & (e_z^{\mathcal{I}})^T\end{bmatrix}^T$ can written compactly as
 \begin{equation}
@@ -131,7 +123,7 @@ For control design, closed-loop reference models are designed as
 \begin{equation}
 \dot{x}_m = A_m x_m + B_z z_{cmd} + L e_y + \mathcal{F}_r(t), \quad y_m = C x_m
 \end{equation}
-where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a nominal Luenberger-like feedback gain designed for the system without uncertainty, using the linear quadratic regulator servomechanism (LQR-PI) design method, and $\mathcal{F}_r(t)$ is a function which changes depending on the actuator model used. For sake of brevity, readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for full derivations of the adaptive controllers used in this article. In what follows, we will summarized the design for the ``nominal'' controller and for the ``mitigating'' controller, and assume the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$) for simplicity.
+where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a nominal Luenberger-like feedback gain designed for the system without uncertainty, using the robust servomechanism linear quadratic regulator (RSLQR) design method, and $\mathcal{F}_r(t)$ is a function used when $r \geq 2$ to recover stability properties in the presence of uncertainty. For sake of brevity, readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for full derivations of the adaptive controllers used in this article. In what follows, we will summarized the design for the ``nominal'' controller and for the ``mitigating'' controller, and assume the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$) for simplicity.
  
 %This augmented model is defined by nominal state, input, and output matrices
 %\begin{equation}  \small
@@ -179,7 +171,7 @@ where $\alpha_i > 0$ are free design parameters. We then define
 \begin{align}
 S &= (C B_1^a)^T \label{eq:S}\\	\overline{C} & = S C\\ R^{-1} &= (\overline{C} B_1^a)^{-1} \big[ \overline{C} A B_1^a + (\overline{C} A B_1^a)^T\big] (\overline{C} B_1^a)^{-1} + \epsilon I \\ L & = B_1^a R^{-1} S \label{eq:L}
 \end{align}
-where $\epsilon > 0$ is a gain defined in \cite[Eq. 30]{qu2015adaptive}. 
+where $\epsilon > 0$ \cite[Eq. 30]{qu2015adaptive} is chosen to guarantee stability of the adaptive system. 
 
 The function $\mathcal{F}_2(t)$ makes use of scaled error signal
 \begin{equation}
@@ -211,7 +203,7 @@ where $\hat{\Psi}_{\Lambda}(t)$ is a matrix of adaptive parameters, defined more
 \begin{aligned}
 	\dot{\hat{\Psi}}_m(t) &= \Gamma_{m} \overline{e}_{sy}(t) e_y^T(t) S^T \\
 	\dot{\hat{\Psi}}_{\Lambda}(t) &= -\Gamma_{\Lambda} \mathcal{X}(t) e_y^T (t) S^T
-\end{aligned}
+\end{aligned} \label{eq:rd2-adaptation}
 \end{equation}
 with diagonal adaptation gains $\Gamma_{m}, \Gamma_{\Lambda} > 0$.
 
@@ -220,12 +212,17 @@ Control design with the second-order actuator model is similar to that described
 \begin{equation}
 B_1^a = \alpha_0 B_3 + \alpha_1 A B_3 + \alpha_2 A^2 B_3 \label{eq:rd3-b1a}
 \end{equation}
-and proceeding with (\ref{eq:S})--(\ref{eq:L}). A definition for $\epsilon>0$ in this case can be found in \cite{qu2016phd}. The definition of $\mathcal{F}_3(t)$ will utilize several filtered error quantities, namely
-\begin{equation} \small
+and proceeding with (\ref{eq:S})--(\ref{eq:L}). A definition for $\epsilon>0$ in this case can be found in \cite{qu2016phd}. To simplify notation, the operator $\Pi \{\cdot \}$ is defined as
+\begin{equation}
+\Pi \{ \cdot \} = \big( \alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} \big) \{ \cdot \}
+\end{equation}
+
+The definition of $\mathcal{F}_3(t)$ will utilize filtered error vectors $\overline{e}_{sy}^{[1]}(t)$, $\overline{e}_{sy}^{[2]}(t)$, and $\overline{e}_{sy}^{[1][2]}(t)$, defined by
+\begin{equation}
 \begin{aligned} 
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[1]}(t) \big \} & = (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ e_{sy}(t) \big \} \\
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[2]}(t) \big \} & = \alpha_2 e_{sy}(t) \\
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{ \overline{e}_{sy}^{[1][2]}(t) \big \} & = (\alpha_2 \frac{d}{dt}) \big \{ \hat{\phi}_1^T(t) \bar{e}_{sy}^{[1]}(t) \big \}
+	\Pi \big \{ \overline{e}_{sy}^{[1]}(t) \big \} & = (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ e_{sy}(t) \big \} \\
+	\Pi \big \{ \overline{e}_{sy}^{[2]}(t) \big \} & = \alpha_2 e_{sy}(t) \\
+	\Pi \big \{ \overline{e}_{sy}^{[1][2]}(t) \big \} & = (\alpha_2 \frac{d}{dt}) \big \{ \hat{\phi}_1^T(t) \bar{e}_{sy}^{[1]}(t) \big \}
 \end{aligned}	
 \end{equation}
 where $e_{sy}(t)$ was defined in (\ref{eq:esy}), $\hat{\phi}_1(t)$ is a vector of adaptive parameters, and $\alpha_i > 0$ are again free design parameters. We must also define the integrated and scaled measurement output error, 
@@ -233,17 +230,17 @@ where $e_{sy}(t)$ was defined in (\ref{eq:esy}), $\hat{\phi}_1(t)$ is a vector o
 e_{y}^{\mathcal{I}}(t) = \int_0^{t} L\big (y(\tau) - y_m(\tau)\big) d\tau
 \end{equation}
 which is used to create the filtered error signals
-\begin{equation} \small
+\begin{equation}
 \begin{aligned}
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \} &= (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T (t) e_{y}^{\mathcal{I}}(t) \big \} \\
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big \} &= (\alpha_2 \frac{d}{dt}) \big \{ \hat{\Lambda}(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \}
+	\Pi \big \{  \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \} &= (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T (t) e_{y}^{\mathcal{I}}(t) \big \} \\
+	\Pi \big \{  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big \} &= (\alpha_2 \frac{d}{dt}) \big \{ \hat{\Lambda}(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \}
 \end{aligned}	
 \end{equation}
 where $\hat{\Phi}_1(t)$ and $\hat{\Lambda}(t)$ are matrices of adaptive parameters. We define the shorthand notations
 \begin{equation}
 \begin{aligned}
 	f_a \{ \cdot \} &= \big(\alpha_0 \alpha_2 B_3 + (\alpha_1 B_3 + \alpha_2 A B_3)\frac{d}{dt} \big) \{ \cdot \} \\
-	f_b \{ \cdot \} &= \alpha_2 B_3 \big(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} \big) \{ \cdot \}
+	f_b \{ \cdot \} &= \alpha_2 B_3 \Pi \{ \cdot \}
 \end{aligned}
 \end{equation}
 and use these to define
@@ -254,16 +251,16 @@ and use these to define
 where $\hat{\phi}_2(t)$ is an additional vector of adaptive parameters. We define filtered reference model states $\overline{x}_m^{[1]}$ and $\overline{x}_m^{[2]}$ as
 \begin{equation}
 \begin{aligned}
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{x}_{m}^{[1]} (t) \big \} &= (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ x_m (t) \big \} \\
-	(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} )\big \{  \overline{x}_{m}^{[2]}(t) \big \} &= \alpha_2 x_m (t)
+	\Pi \big \{  \overline{x}_{m}^{[1]} (t) \big \} &= (\alpha_1 + \alpha_2 \frac{d}{dt}) \big \{ x_m (t) \big \} \\
+	\Pi \big \{  \overline{x}_{m}^{[2]}(t) \big \} &= \alpha_2 x_m (t)
 \end{aligned}	
 \end{equation}
 
 We also define variable $\overline{v}_m(t)$ with artificial time derivatives, such that
 \begin{equation}
 \begin{gathered}
-	\overline{v}_m = x_m, \quad \frac{d}{dt}\overline{v}_m  = A x_m + B_z z_{cmd} \\
-	\frac{d^2}{dt^2} \overline{v}_m = A^2 x_m + A B_z z_{cmd} + B_z \frac{d}{dt} \{ z_{cmd} \} - A L e_y
+	\overline{v}_m = x_m, \quad \frac{d \overline{v}_m}{dt}  = A x_m + B_z z_{cmd} \\
+	\frac{d^2 \overline{v}_m}{dt^2}  = A^2 x_m + A B_z z_{cmd} + B_z \frac{dz_{cmd}}{dt} - A L e_y
 \end{gathered}
 \end{equation}
 We redefine the regressor vector
@@ -271,9 +268,11 @@ We redefine the regressor vector
 \mathcal{X}(t) = \big[ (K^T \overline{x}_m^{[2]})^T,\quad \overline{v}_m^T,\quad \overline{x}_m^{[1]T},\quad \overline{x}_m^{[2]T} \big]^T
 \end{equation}
 and we are then able to set the control law as
-\begin{multline}
-	u (t) = -(\alpha_0 + \alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2} ) \big \{ \hat{\Psi}^T(t) \mathcal{X}(t) \big \} \\ -  (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T(t) \big \} e_y^\mathcal{I} (t)
-\end{multline}
+\begin{equation}
+\begin{aligned}
+	u (t) = -&\Pi \big \{ \hat{\Psi}^T(t) \mathcal{X}(t) \big \} \\ - & (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T(t) \big \} e_y^\mathcal{I} (t)
+\end{aligned}
+\end{equation}
 where 
 \begin{equation}
 \hat{\Psi}(t) = \big[ \hat{\Upsilon}(t)^T,\quad \hat{\Phi}_1^T(t),\quad \hat{\Phi}_2^T(t),\quad \hat{\Phi}_3^T(t) \big]^T 
@@ -290,14 +289,14 @@ and
 \begin{equation}
 \hat{\Theta}(t) = \big[ \hat{\phi}_1^T(t),\quad \hat{\phi}_2^T(t),\quad \hat{\Lambda}^T(t) \big]
 \end{equation}
-as a second matrix of adaptive parameters. Adaptation is then carried out as follows
+as a second matrix of adaptive parameters. Inputs to the high-order tuners are calculated by integrating
 \begin{equation}
 \begin{aligned}
-\dot{\hat{\Psi}}'(t) &= \Gamma \xi (S e_y)^T \text{sgn}(\Lambda) \\
-\dot{\hat{\Theta}}'(t) &= -\Gamma \nu (S e_y)^T 
+\dot{\hat{\Psi}}'(t) &= \Gamma_{\Psi} \xi e_y^T S^T \text{sgn}(\Lambda) \\
+\dot{\hat{\Theta}}'(t) &= -\Gamma_{\Theta} \nu e_y^T S^T
 \end{aligned}
 \end{equation}
-and the desired adaptive parameters are outputs of the tuners
+where $\Gamma_{\Psi}, \Gamma_{\Theta} > 0$ are diagonal adaptation gains. The desired adaptive parameters are outputs of the tuners
 \begin{equation}
 \begin{aligned}
 	\dot{X}_{\hat{\Psi}}(t) &= \big( A_T X_{\hat{\Psi}} + B_T (\hat{\Psi}'(t))^T \big) g(\xi, \mu_{\xi}) \\
@@ -326,12 +325,22 @@ Derivatives of the adaptive parameters are given by
 \begin{aligned}
 	\dot{\hat{\Psi}}(t) &= (C_T^\delta X_{\hat{\Psi}})^T, \qquad \ddot{\hat{\Psi}}(t) &= (C_T^{\delta\delta}X_{\hat{\Psi}})^T \\
 	\dot{\hat{\Theta}}(t) &= (C_T^\delta X_{\hat{\Theta}})^T, \qquad \ddot{\hat{\Theta}}(t) &= (C_T^{\delta\delta}X_{\hat{\Theta}})^T
-\end{aligned}
+\end{aligned} \label{eq:rd3-adaptation-deriv}
 \end{equation}
-where $C_T^{\delta}$ and $C_T{\delta \delta}$ are block diagonal matrices with diagonals $C_{T,i}^{\delta} = \begin{bmatrix} 0,~ & 1	\end{bmatrix}$ and $C_{T,i}^{\delta\delta} = -\frac{1}{\alpha_2}\begin{bmatrix} \alpha_0,~ & \alpha_1 \end{bmatrix}$. 
+where $C_T^{\delta}, C_T{\delta \delta} \in \mathbb{R}^{m \times 2m}$ are block diagonal matrices with diagonals $C_{T,i}^{\delta} = \begin{bmatrix} 0,~ & 1	\end{bmatrix}$ and $C_{T,i}^{\delta\delta} = -\frac{1}{\alpha_2}\begin{bmatrix} \alpha_0,~ & \alpha_1 \end{bmatrix}$. 
 
 \subsection{Human Supervisor}\label{subsec:sc_human}
-Notices, reacts, instructs.
+%Notices, reacts, instructs.
+The remote human supervisor under our framework for shared anomaly response is responsible for the following three tasks.
+\begin{enumerate}
+	\item Timely detection and characterization of anomalous closed-loop dynamical behavior
+	\item Isolation of control loop with anomalous behavior (i.e. longitudinal or lateral-directional)
+	\item Commanding a change from nominal autopilot (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) to mitigating autopilot (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}).
+\end{enumerate}
+
+The first task requires an attentive human operator able to discern that (a) some anomaly has occurred and control performance degradation is not caused solely by external disturbances; (b) something must be done rapidly in order to recover stability and performance; (c) it may be possible to recover stability and performance via corrective action. The second task requires a human operator with knowledge and familiarity with the VFA dynamics and control structure to understand which control loop (e.g. longitudinal, lateral-directional, or airspeed in some applications) is the source of the anomalous dynamics. The final task is for the trained remote human operator to transfer this diagnosis to the autopilot by changing the relevant control loop to its ``mitigating'' controller.
+
+Note that while the remote human operator is assumed to have the training and controls necessary to disable all autopilot functionality and control the vehicle manually, this is deliberately avoided in this shared anomaly response. 
 
 \section{Application to HALE VFA}
 \subsection{Aircraft Model}
@@ -382,21 +391,21 @@ This nonlinear VFA model is augmented with a linear actuator model so that slow 
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles.pdf}
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles-2.pdf}
 	\caption{Poles of linearized system for different dihedral angles}
 	\label{fig:trim-poles}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles-zoom.pdf}
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles-zoom-2.pdf}
 	\caption{Dominant poles of linearized system}
 	\label{fig:trim-poles-zoom}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\columnwidth]{../fig/trim-inputs.pdf}
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-inputs-2.pdf}
 	\caption{Inputs to system at different dihedral angles}
 	\label{fig:trim-inputs}
 \end{figure}
@@ -405,20 +414,20 @@ This nonlinear VFA model is augmented with a linear actuator model so that slow 
 A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft, first proposed in \cite{thomsen2018shared}. In the following simulation, we demonstrate an example of how this is possible.
 
 \subsection{Numerical Simulation}
-In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (LQR-PI + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by \cite{qu2016phd}.
+In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (RSLQR + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by \cite{qu2016phd}.
 
-There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \leq t < 600 s$, the vehicle operates in nominal operation with the adaptive controller and baseline LQR-PI control design. At $t = 600 s$, a failure causes the vehicle's actuators to change from first-order to second-order. For $600 \leq t < 800 s$, the ``nominal'' controller is attempting to control the system which has severe unmodeled dynamics. In the shared control framework, the human operator notices that this closed-loop behavior is anomalous, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance.
+There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \leq t < 600 s$, the vehicle operates in nominal operation with the adaptive controller and baseline RSLQR control design. At $t = 600 s$, a failure causes the vehicle's actuators to change from first-order to second-order. For $600 \leq t < 800 s$, the ``nominal'' controller is attempting to control the system which has severe unmodeled dynamics. In the shared control framework, the human operator notices that this closed-loop behavior is anomalous, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{../fig/3stage_sim_v2.pdf}
+	\includegraphics[width=\columnwidth]{../fig/3stage_sim_v3.png}
 	\caption{Command tracking and control effort across three stages of simulation}
 	\label{fig:sim}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{../fig/3stage_sim_err.pdf}
+	\includegraphics[width=\columnwidth]{../fig/3stage_sim_err_v3.png}
 	\caption{Norm of output error across three stages of simulation}
 	\label{fig:err}
 \end{figure}

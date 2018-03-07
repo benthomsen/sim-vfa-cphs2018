@@ -271,8 +271,8 @@ classdef SimVFA < handle
         
         function setPlotOpts(vfa)
         % set plotting options
-            vfa.pltOpt.legfontsize = 12;
-            vfa.pltOpt.fontsize = 14;
+            vfa.pltOpt.legfontsize = 14;
+            vfa.pltOpt.fontsize = 16;
             vfa.pltOpt.weight = 'n';
             vfa.pltOpt.fontname = 'Times New Roman';
         end
@@ -1033,7 +1033,7 @@ classdef SimVFA < handle
             TP = vfa.trimPts;
             
             % Figure 1: Zoomed-out imaginary plane
-            figure; 
+            figure('Position',[1,1, 800, 300]);
             hold on
             plot(TP.trim_eig_real,TP.trim_eig_imag,'.k','markersize',12);
             h2=plot(TP.trim_eig_real(1,:),TP.trim_eig_imag(1,:),'^m','markersize',8,'LineWidth',2);
@@ -1048,7 +1048,7 @@ classdef SimVFA < handle
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
             % Figure 2: Zoomed-in imaginary plane
-            figure;
+            figure('Position',[1,1, 800, 300]);
             hold on;
             plot(TP.trim_eig_real,TP.trim_eig_imag,'.k','markersize',12);
             h2=plot(TP.trim_eig_real(1,:),TP.trim_eig_imag(1,:),'^m','markersize',8,'LineWidth',2);
@@ -1064,7 +1064,7 @@ classdef SimVFA < handle
             axis([-0.2 0.5 -2 2])
 
             % Figure 3: Input trims vs. dihedral angle
-            figure;
+            figure('Position',[1,1, 800, 300]);
             hold on;
             box on;
             plot(TP.etasweep,180/pi*TP.trim_inputs(:,2),'-k','markersize',12)
