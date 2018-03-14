@@ -1061,33 +1061,24 @@ classdef SimVFA < handle
             ylabel('Imaginary','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
             box on;
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
-            axis([-0.2 0.5 -2 2])
+%             axis([-0.1 0.1 -2 2])
 
             % Figure 3: Input trims vs. dihedral angle
             figure('Position',[1,1, 800, 300]);
             hold on;
-            box on;
+            box on; yyaxis left;
             plot(TP.etasweep,180/pi*TP.trim_inputs(:,2),'-k','markersize',12)
             plot(TP.etasweep,180/pi*TP.trim_inputs(:,3),'--k','markersize',12)
             plot(TP.etasweep,180/pi*TP.trim_inputs(:,4),'.k','markersize',12)
             plot(TP.etasweep,180/pi*TP.trim_inputs(:,5),':k','markersize',9,'LineWidth',2)
-            plot(TP.etasweep,TP.trim_inputs(:,1)/5,'ok','markersize',6)
             axis([0 max(TP.etasweep) -30 40])
-            ylabel('Trim (Control Surface Inputs [deg], Thrust [5 lbf])','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
+            ylabel('Trim (Control Surface Inputs [deg]','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
             xlabel('Dihedral angle [deg]','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
+            yyaxis right;
+            plot(TP.etasweep,TP.trim_inputs(:,1),'ok','markersize',6)
+            ylabel('Thrust [lbf])','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
             h=legend('$\delta_{a_c}$','$\delta_{a_o}$','$\delta_{e_c}$','$\delta_{e_o}$','Thrust');
             set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast')
-            set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
-
-
-            % Figure 4: Angle of attack trim
-            figure;
-            hold on;
-            box on;
-            plot(TP.etasweep,TP.trim_states(:,2)*180/pi,'k')
-            ylabel('Trim angle of attack [deg])','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
-            xlabel('Dihedral angle [deg]','fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
-            axis([0 max(TP.etasweep) 0 10])
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
         end
@@ -1097,35 +1088,39 @@ classdef SimVFA < handle
             SOO = vfa.simOutObj;
             
             tsim = vfa.simOpt.tsim;
+            c2 = [0.466, 0.674, 0.188];
             
-            figure('Position',[1,1, 800, 400]);
-            subplot(2,2,1)
-            plot(SOO.t_sim, SOO.r_cmd(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1)
-            hold on; grid on; plot(SOO.t_sim, SOO.z(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1, 'LineStyle', '-.')
-            xlim([0 tsim])
-            title('Dihedral (deg)')
+            figure('Position',[1,1, 800, 640]);
+            subplot(4,1,1)
+            plot(SOO.t_sim, SOO.r_cmd(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1.5)
+            hold on; grid on; plot(SOO.t_sim, SOO.z(1,:)*180/pi + vfa.simOpt.eta_nom, 'LineWidth', 1.5, 'color', c2)
+            xlim([0 1500])
+            ylim([9 13])
+            title('Dihedral (deg)','interpreter','latex')
             h=legend('Command', 'Output');
             set(h,'fontsize',vfa.pltOpt.legfontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname,'Interpreter','Latex','Location','SouthEast'); legend('boxoff')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
-            subplot(2,2,2)
-            plot(SOO.t_sim, SOO.r_cmd(2,:), 'LineWidth', 1)
-            hold on; grid on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1, 'LineStyle', '-.')
-            xlim([0 tsim])
-            title('Vertical Accel (ft/s^2)')
+            subplot(4,1,2)
+            plot(SOO.t_sim, SOO.r_cmd(2,:), 'LineWidth', 1.5)
+            hold on; grid on; plot(SOO.t_sim, SOO.z(2,:), 'LineWidth', 1.5, 'color', c2)
+            xlim([0 1500])
+            ylim([-3 3])
+            title('Vertical Accel (ft/s$^2$)','interpreter','latex')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
-            subplot(2,2,3)
-            plot(SOO.t_sim, SOO.u_p(1,:)*180/pi, 'LineWidth', 1); grid on;
-            xlim([0 tsim])
-            title('Outer Aileron (deg)')
-            xlabel('Time (s)')
+            subplot(4,1,3)
+            plot(SOO.t_sim, SOO.u_p(1,:)*180/pi, 'LineWidth', 1.5); grid on;
+            xlim([0 1500])
+            ylim([0 3])
+            title('Outer Aileron (deg)','interpreter','latex')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
 
-            subplot(2,2,4)
-            plot(SOO.t_sim, SOO.u_p(2,:)*180/pi, 'LineWidth', 1); grid on;
-            xlim([0 tsim])
-            title('Center Elevator (deg)')
+            subplot(4,1,4)
+            plot(SOO.t_sim, SOO.u_p(2,:)*180/pi, 'LineWidth', 1.5); grid on;
+            xlim([0 1500])
+            ylim([-3 0])
+            title('Center Elevator (deg)','interpreter','latex')
             xlabel('Time (s)')
             set(gca,'fontsize',vfa.pltOpt.fontsize,'fontweight',vfa.pltOpt.weight,'fontname',vfa.pltOpt.fontname)
                     
@@ -1162,7 +1157,7 @@ classdef SimVFA < handle
 
                     figure('Position',[100,100, 800, 400]);
                     plot(SOO.t_sim, norms, 'LineWidth', 1);
-                    xlim([0 tsim]); grid on;
+                    xlim([0 1500]); grid on;
                     title('Normalized Learned Parameters')
                     xlabel('Time (s)')
                     h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_3^1\|$', '$\|\psi_3^2\|$', '$\|\underline{\Psi}_3\|$');
@@ -1190,7 +1185,7 @@ classdef SimVFA < handle
 
                     figure('Position',[100,100, 800, 400]);
                     plot(SOO.t_sim, norms, 'LineWidth', 1);
-                    xlim([0 tsim]); grid on;
+                    xlim([0 1500]); grid on;
                     title('Normalized Learned Parameters')
                     xlabel('Time (s)')
                     h=legend('$\|\underline{\it{\Lambda}}\|$', '$\|\underline{\Psi}_1\|$', '$\|\underline{\Psi}_2\|$', '$\|\psi_{2}^1\|$');

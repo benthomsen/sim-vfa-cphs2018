@@ -34,10 +34,11 @@ Five to ten keywords, preferably chosen from the IFAC keyword list.
 
 \section{Introduction}
 %Adaptive control and modeling assumptions.
-Model-based feedback control techniques, where control design is carried out based on \textit{a priori} knowledge of system dynamics, have become ubiquitous in industries such as aerospace, due to their ability to specify characteristics of the closed-loop system dynamics, ensure stability, and provide optimality over a range of operating conditions. The field of adaptive control (MRAC) addresses a limitation of control based on models of plant dynamics, namely that the parameters used to model dynamical systems will always have a degree of uncertainty in them. Model reference adaptive control, as described by \cite{narendra2012stable}, accommodates these parametric uncertainties through online tuning of control parameters to ensure specified closed-loop dynamics are realized. Recent advances in MRAC have included the development of closed-loop reference models (CRMs) by \cite{gibson2013adaptive}, which greatly improves transient performance during online learning. While adaptive control is able to guarantee stability and tracking convergence in the presence of parametric uncertainties, other aspects of the system -- such as its order -- are assumed to be known \textit{a priori} for control design.
+Model-based feedback control techniques, where control design is carried out based on \textit{a priori} knowledge of system dynamics, have become ubiquitous in industries such as aerospace, due to their ability to specify characteristics of the closed-loop system dynamics, ensure stability, and provide optimality over a range of operating conditions. The field of adaptive control (MRAC) addresses a limitation of control based on models of plant dynamics, namely that the parameters used to model dynamical systems will always have a degree of uncertainty in them. Model reference adaptive control, as described by \cite{narendra2012stable}, accommodates these parametric uncertainties through online tuning of control parameters to ensure specified closed-loop dynamics are realized. Recent advances in MRAC have included the development of closed-loop reference models (CRMs) by \cite{gibson2013adaptive}, which greatly improves transient performance during online learning. While adaptive control is able to guarantee stability and tracking convergence in the presence of parametric uncertainties, other aspects of the system -- such as its order -- are assumed to be known \textit{a priori} for control design. 
+%In practice, dynamical behavior is excluded from the control model for simplicity and ease of analysis if it sufficiently fast relative to the closed-loop system bandwidth.
 
-%Human pilots and operators, and their struggles with unfamiliar, off-nominal dynamics.
-Human operators of dynamical systems also develop mental models of the dynamics of the systems which they are controlling, often over long periods of active learning. Human pilots have been studied extensively to examine their learning processes and ability to adapt their control strategies to unfamiliar situations. When unexpected changes occur during operation, however, it is often difficult for human operators to learn the new dynamics in the time period necessary to avoid loss of control. Numerous aircraft accidents have involved pilot error following a transition from autonomous to manual control. Studies of human pilot behavior have repeatedly demonstrated how pilots operating in stressful situations controlling unfamiliar dynamics resort to applying high control gains, which can lead to a loss of stability margins and exceedence of the aircraft flight envelope. 
+%Human pilots and operators, and their struggles with unfamiliar, off-nominal dynamics. %Remote human pilots and further difficulties
+Human operators of dynamical systems also develop mental models of the dynamics of the systems which they are controlling, often over long periods of active learning. Human pilots have been studied extensively to examine their learning processes and ability to adapt their control strategies to unfamiliar situations. When unexpected changes occur during operation, however, it is often difficult for human operators to learn the new dynamics in the time period necessary to avoid loss of control. Numerous aircraft accidents have involved pilot error following a transition from autonomous to manual control. Studies of human pilot behavior have repeatedly demonstrated how pilots operating in stressful situations controlling unfamiliar dynamics resort to applying high control gains, which can lead to a loss of stability margins and exceedence of the aircraft flight envelope. Issues with manual control of dynamical systems are exacerbated when the human operator is physically separated from the dynamics of the system, as is the case with remotely piloted vehicles (RPV). The additional complexities involved with remote operation include a lack of physical sensing of the dynamics through proprioceptive and somatosensory pathways, time delays between the vehicle and operator for both sensing and actuation, and difficulty ascertaining the open-loop dynamical response between control input and plant output. 
 
 %HALE VFA.
 Solar-electric high altitude long endurance (HALE) aircraft concepts have recently received heavy attention as key enabling technologies has advanced to allow for feasible months-long unmanned operation of these aircraft. These concepts, such as the NASA/AeroVironment Helios, sacrifice structural rigidity to decrease vehicle mass, and are thus classified as very flexible aircraft (VFA). For additional mass reductions, it may be desirable to use small actuators which introduce slow dynamics which must be accounted for in control design. The benefits derived from weight savings in HALE VFA platforms -- and the fact that they are unmanned -- may lead to designs with more modeling uncertainties and potential for online variations in dynamics.
@@ -78,9 +79,9 @@ The problem we investigate is whether autonomous control methodologies can be us
 
 %Human supervisor is present (remotely), but should not be given control responsibilities following anomaly.
 
-\section{Shared Control}
+\section{Shared Control}\label{sec:shared_ctrl}
 %Overview of shared control architecture. What is assumed?
-We introduce a shared decision-making and control framework which we posit will enable the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of unmodeled dynamics as described in the preceding section. This shared control framework is based on a combination of actions by UAV autopilots and remote human supervisors/operators. MRAC autopilots and complementary higher-level guidance functions allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators are constantly monitoring the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to potential communication delays and a weakened understanding of the vehicle dynamics and state due to the remote (not onboard) nature. Our shared control framework involves the use of the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. We will demonstrate how suitable adaptive autopilot functionalities allow for this possibility.
+We introduce a shared decision-making and control framework which we posit will enable the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of unmodeled dynamics as described in the preceding section. This shared control framework is based on a combination of actions by UAV autopilots and remote human supervisors/operators, based on the framework for shared control proposed by \cite{thomsen2018shared}. MRAC autopilots and complementary higher-level guidance functions allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators are constantly monitoring the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to potential communication delays and a weakened understanding of the vehicle dynamics and state due to the remote (not onboard) nature. Our shared control framework involves the use of the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. We will demonstrate how suitable adaptive autopilot functionalities allow for this possibility.
 
 %Division of responsibilities.
 
@@ -102,7 +103,7 @@ An autonomous controller is designed  to track commands for vertical acceleratio
 	\item A baseline control design using the robust servomechanism linear quadratic regulator method (RSLQR)
 	\item An adaptive output-feedback augmentation designed for the MIMO relative degree two dynamics which arise from including actuator dynamics, to handle the parametric uncertainties introduced
 \end{enumerate}
-The shared control framework involves separate MRAC designs for the plant (\ref{eq:plant_dynamics}) in combination with actuator dynamics (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:first_order_act}) is the ``nominal'' control design, and excluding exceptional failures, this is the controller in use by the UAV autopilot. The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:second_order_act}) is a predefined ``mitigating'' controller, whose use case will be defined more fully in Section \ref{subsec:sc_human}.
+The shared control framework involves separate MRAC designs for the plant (\ref{eq:plant_dynamics}) in combination with actuator dynamics (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:first_order_act}) is the ``nominal'' control design, and excluding exceptional failures, this is the controller in use by the UAV autopilot. The control design for (\ref{eq:plant_dynamics}) and (\ref{eq:second_order_act}) is a predefined ``recovery'' controller, whose use case will be defined more fully in Section \ref{subsec:sc_human}.
 
 Both of these control designs use an augmented linear plant formulation, where the plant (\ref{eq:plant_dynamics}) is extended with the linear actuator dynamics -- either (\ref{eq:first_order_act}) or (\ref{eq:second_order_act}) -- as well as integrated tracking errors 
 \begin{equation}
@@ -123,7 +124,7 @@ For control design, closed-loop reference models are designed as
 \begin{equation}
 \dot{x}_m = A_m x_m + B_z z_{cmd} + L e_y + \mathcal{F}_r(t), \quad y_m = C x_m
 \end{equation}
-where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a nominal Luenberger-like feedback gain designed for the system without uncertainty, using the robust servomechanism linear quadratic regulator (RSLQR) design method, and $\mathcal{F}_r(t)$ is a function used when $r \geq 2$ to recover stability properties in the presence of uncertainty. For sake of brevity, readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for full derivations of the adaptive controllers used in this article. In what follows, we will summarized the design for the ``nominal'' controller and for the ``mitigating'' controller, and assume the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$) for simplicity.
+where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a nominal Luenberger-like feedback gain designed for the system without uncertainty, using the robust servomechanism linear quadratic regulator (RSLQR) design method (see \cite{lavretsky2013robust}). $\mathcal{F}_r(t)$ is a function used when $r \geq 2$ to recover stability properties in the presence of uncertainty. For sake of brevity, readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for full derivations of the adaptive controllers used in this article. In what follows, we will summarize the design for the ``nominal'' controller and for the ``recovery'' controller, and assume the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$) for simplicity.
  
 %This augmented model is defined by nominal state, input, and output matrices
 %\begin{equation}  \small
@@ -181,6 +182,11 @@ and a filtered version of this signal, $\overline{e}_{sy}(t)$, given in the form
 \begin{equation}
 (\alpha_0 + \alpha_1 \frac{d}{dt}) \big\{ \overline{e}_{sy}(t) \big\} = \alpha_1 e_{sy}(t) \label{eq:e_sy_bar}
 \end{equation}
+It is worth noting that this can be represented in the frequency domain as
+\begin{equation*}
+	\overline{E}_{sy}(s) = \frac{\alpha_1}{\alpha_1 s + \alpha_0} E_{sy}(s)
+\end{equation*}
+
 The function is then defined as
 \begin{equation}
 \mathcal{F}_2(t) = B_2 (\alpha_0 + \alpha_1 \frac{d}{dt})\big\{ \hat{\Psi}_m^T (t) \bar{e}_{sy}(t) \big\}
@@ -196,7 +202,7 @@ We define a regressor vector
 \end{equation}
 and control law, $u(t)$, is then given by
 \begin{equation}
-u = - (\alpha_0 + \alpha_1 \frac{d}{dt}) \big \{ \hat{\Psi}_{\Lambda}^T (t) \mathcal{X}(t) \big\}	
+u(t) = - (\alpha_0 + \alpha_1 \frac{d}{dt}) \big \{ \hat{\Psi}_{\Lambda}^T (t) \mathcal{X}(t) \big\}	
 \end{equation}
 where $\hat{\Psi}_{\Lambda}(t)$ is a matrix of adaptive parameters, defined more completely in \cite{qu2016adaptive}. The laws for adaptation of matrices $\hat{\Psi}_m(t)$ and $\hat{\Psi}_{\Lambda}(t)$ are given by
 \begin{equation}
@@ -207,7 +213,7 @@ where $\hat{\Psi}_{\Lambda}(t)$ is a matrix of adaptive parameters, defined more
 \end{equation}
 with diagonal adaptation gains $\Gamma_{m}, \Gamma_{\Lambda} > 0$.
 
-\subsubsection{Mitigating Adaptive Control Design}
+\subsubsection{Recovery Adaptive Control Design}
 Control design with the second-order actuator model is similar to that described above. The definition of $L$ is modified by replacing $B_1^a$ in (\ref{eq:rd2-b1a}) with
 \begin{equation}
 B_1^a = \alpha_0 B_3 + \alpha_1 A B_3 + \alpha_2 A^2 B_3 \label{eq:rd3-b1a}
@@ -275,15 +281,16 @@ and we are then able to set the control law as
 \end{equation}
 where 
 \begin{equation}
-\hat{\Psi}(t) = \big[ \hat{\Upsilon}(t)^T,\quad \hat{\Phi}_1^T(t),\quad \hat{\Phi}_2^T(t),\quad \hat{\Phi}_3^T(t) \big]^T 
+\hat{\Psi}(t) = \big[ \hat{\Upsilon}^T(t),\quad \hat{\Phi}_1^T(t),\quad \hat{\Phi}_2^T(t),\quad \hat{\Phi}_3^T(t) \big]^T 
 \end{equation}
-is a matrix of adaptive parameters. In this controller, the laws for parameter adaptation use high-order tuners as in \cite{qu2016phd}. We first define regressor vectors $\xi(t)$ and $\nu(t)$ as
+is a matrix of adaptive parameters. In this controller, the laws for parameter adaptation use high-order tuners as in \cite{qu2016phd}. We first define regressor vector $\nu(t)$ as
 \begin{equation}
-	\xi(t) = \begin{bmatrix}
-		K^T \overline{x}_m^{[2]} \\ x_m \\ \overline{x}_m^{[1]} \\ \overline{x}_m^{[2]}
-	\end{bmatrix}, \quad \nu(t) = \begin{bmatrix}
-		\overline{e}_{\mathcal{I}y}^{[1][2]} - \overline{e}_{sy}^{[1]} - \overline{e}_{sy}^{[1][2]} \\ -\overline{e}_{sy}^{[2]} \\ \overline{e}_{\mathcal{I}y}^{[1]}
-	\end{bmatrix}
+%	\xi(t) = \begin{bmatrix}
+%		K^T \overline{x}_m^{[2]} \\ x_m \\ \overline{x}_m^{[1]} \\ \overline{x}_m^{[2]}
+%	\end{bmatrix}, \quad 
+	\nu(t) = \begin{bmatrix}
+		(\overline{e}_{\mathcal{I}y}^{[1][2]} - \overline{e}_{sy}^{[1]} - \overline{e}_{sy}^{[1][2]})^T, & \quad (-\overline{e}_{sy}^{[2]})^T, & \quad (\overline{e}_{\mathcal{I}y}^{[1]})^T
+	\end{bmatrix}^T
 \end{equation}
 and 
 \begin{equation}
@@ -292,14 +299,14 @@ and
 as a second matrix of adaptive parameters. Inputs to the high-order tuners are calculated by integrating
 \begin{equation}
 \begin{aligned}
-\dot{\hat{\Psi}}'(t) &= \Gamma_{\Psi} \xi e_y^T S^T \text{sgn}(\Lambda) \\
+\dot{\hat{\Psi}}'(t) &= \Gamma_{\Psi} \mathcal{X} e_y^T S^T \text{sgn}(\Lambda) \\
 \dot{\hat{\Theta}}'(t) &= -\Gamma_{\Theta} \nu e_y^T S^T
 \end{aligned}
 \end{equation}
 where $\Gamma_{\Psi}, \Gamma_{\Theta} > 0$ are diagonal adaptation gains. The desired adaptive parameters are outputs of the tuners
 \begin{equation}
 \begin{aligned}
-	\dot{X}_{\hat{\Psi}}(t) &= \big( A_T X_{\hat{\Psi}} + B_T (\hat{\Psi}'(t))^T \big) g(\xi, \mu_{\xi}) \\
+	\dot{X}_{\hat{\Psi}}(t) &= \big( A_T X_{\hat{\Psi}} + B_T (\hat{\Psi}'(t))^T \big) g(\mathcal{X}, \mu_{\mathcal{X}}) \\
 	\hat{\Psi}(t) &= (C_T X_{\hat{\Psi}})^T \\
 	\dot{X}_{\hat{\Theta}}(t) &= \big( A_T X_{\hat{\Theta}} + B_T (\hat{\Theta}'(t))^T \big) g(\nu, \mu_{\nu}) \\
 	\hat{\Theta}(t) &= (C_T X_{\hat{\Theta}})^T
@@ -327,7 +334,7 @@ Derivatives of the adaptive parameters are given by
 	\dot{\hat{\Theta}}(t) &= (C_T^\delta X_{\hat{\Theta}})^T, \qquad \ddot{\hat{\Theta}}(t) &= (C_T^{\delta\delta}X_{\hat{\Theta}})^T
 \end{aligned} \label{eq:rd3-adaptation-deriv}
 \end{equation}
-where $C_T^{\delta}, C_T{\delta \delta} \in \mathbb{R}^{m \times 2m}$ are block diagonal matrices with diagonals $C_{T,i}^{\delta} = \begin{bmatrix} 0,~ & 1	\end{bmatrix}$ and $C_{T,i}^{\delta\delta} = -\frac{1}{\alpha_2}\begin{bmatrix} \alpha_0,~ & \alpha_1 \end{bmatrix}$. 
+where $C_T^{\delta}, C_T^{\delta \delta} \in \mathbb{R}^{m \times 2m}$ are block diagonal matrices with diagonals $C_{T,i}^{\delta} = \begin{bmatrix} 0,~ & 1	\end{bmatrix}$ and $C_{T,i}^{\delta\delta} = -\frac{1}{\alpha_2}\begin{bmatrix} \alpha_0,~ & \alpha_1 \end{bmatrix}$. 
 
 \subsection{Human Supervisor}\label{subsec:sc_human}
 %Notices, reacts, instructs.
@@ -335,16 +342,16 @@ The remote human supervisor under our framework for shared anomaly response is r
 \begin{enumerate}
 	\item Timely detection and characterization of anomalous closed-loop dynamical behavior
 	\item Isolation of control loop with anomalous behavior (i.e. longitudinal or lateral-directional)
-	\item Commanding a change from nominal autopilot (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) to mitigating autopilot (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}).
+	\item Commanding a change from nominal autopilot (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) to recovery autopilot (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}).
 \end{enumerate}
 
-The first task requires an attentive human operator able to discern that (a) some anomaly has occurred and control performance degradation is not caused solely by external disturbances; (b) something must be done rapidly in order to recover stability and performance; (c) it may be possible to recover stability and performance via corrective action. The second task requires a human operator with knowledge and familiarity with the VFA dynamics and control structure to understand which control loop (e.g. longitudinal, lateral-directional, or airspeed in some applications) is the source of the anomalous dynamics. The final task is for the trained remote human operator to transfer this diagnosis to the autopilot by changing the relevant control loop to its ``mitigating'' controller.
+The first task requires an attentive human operator able to discern that (a) some anomaly has occurred and control performance degradation is not caused solely by external disturbances; (b) something must be done rapidly in order to recover stability and performance; (c) it may be possible to recover stability and performance via corrective action. The second task requires a human operator with knowledge and familiarity with the VFA dynamics and control structure to understand which control loop (e.g. longitudinal, lateral-directional, or airspeed in some applications) is the source of the anomalous dynamics. The final task is for the trained remote human operator to transfer this diagnosis to the autopilot by changing the relevant control loop to its ``recovery'' controller.
 
 Note that while the remote human operator is assumed to have the training and controls necessary to disable all autopilot functionality and control the vehicle manually, this is deliberately avoided in this shared anomaly response. 
 
-\section{Application to HALE VFA}
-\subsection{Aircraft Model}
-The aircraft model used is a very flexible aircraft (VFA) model developed by \cite{gibson2011modeling}, as shown in Figure \ref{fig:vfa}. 
+\section{Application to HALE VFA} \label{sec:vfa}
+\subsection{HALE VFA Model}
+The shared control solution introduced in Section \ref{sec:shared_ctrl} is applied to the problem introduced in Section \ref{sec:problem} on a high altitude, long endurance (HALE) very flexible aircraft (VFA) model. The aircraft model was developed by \cite{gibson2011modeling}, and is rendered in Figure \ref{fig:vfa}. 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.95\columnwidth]{../fig/VFA_16.jpg}
@@ -352,9 +359,9 @@ The aircraft model used is a very flexible aircraft (VFA) model developed by \ci
 	\label{fig:vfa}
 \end{figure}
 
-The VFA model consists of three rigid lifting sections which are hinged together such that the aircraft is able to bend at the joints of the three sections. The seven states of this nonlinear model are
+The VFA model consists of three rigid lifting sections which are hinged together such that the aircraft is able to bend at the joints of the three sections. In this example, we consider the longitudinal dynamics of this aircraft. The longitudinal dynamics of this nonlinear model are defined by the state vector
 \begin{equation}
-x = \begin{bmatrix}
+x_{\text{vfa}} = \begin{bmatrix}
 V \\
 \alpha \\
 h \\
@@ -368,9 +375,15 @@ q\\
 \end{bmatrix}
 \end{equation}
 
-In this example, we consider the longitudinal dynamics of this aircraft, and linearize and trim the aircraft in straight and level flight using the inputs
+We linearize and trim the aircraft in straight and level flight using the inputs
 \begin{equation}
-	u = \begin{bmatrix}
+	u_{\text{vfa}} = \begin{bmatrix}
+\delta_{th} \\
+\delta_{a,c} \\
+\delta_{a,o} \\
+\delta_{e,c} \\
+\delta_{e,o} 
+\end{bmatrix} = \begin{bmatrix}
 		$Thrust (lbf)$\\
 		$Center aileron (rad)$\\
 		$Outer aileron (rad)$\\
@@ -378,16 +391,44 @@ In this example, we consider the longitudinal dynamics of this aircraft, and lin
 		$Outer elevator (rad)$
 	\end{bmatrix}
 \end{equation}
-at an airspeed of $68$ ft/s, altitude of $40,000$ ft, $2.8^\circ$ angle of attack and pitch angle, and dihedral angles ranging from $0$ to $20^\circ$ in $1^\circ$ increments. Control of the dihedral angle is desired as a large dihedral angle is inefficient for lift generation (and is open-loop unstable), while a small dihedral angle will require more control effort to hold, increasing drag and power requirements while also potentially twisting the aircraft. The measurements available for control design are
+
+For the purposes of this simulation, altitude deviations are assumed to be small, and thus
 \begin{equation}
-y = \begin{bmatrix}
-	$Pitch rate (rad/s)$\\
-	$Dihedral angle (rad)$\\
-	$Vertical acceleration (ft/s)$
-\end{bmatrix}	
+	x_p = \begin{bmatrix}
+V & \; \alpha & \; \theta & \; q & \; \eta & \; \dot{\eta}
+\end{bmatrix}^T
 \end{equation}
 
-This nonlinear VFA model is augmented with a linear actuator model so that slow actuator dynamics can be simulated. Figure \ref{fig:trim-poles} shows the poles of the linearized system for different dihedral angles, and Figure \ref{fig:trim-poles-zoom} shows how the system has unstable poles when trimmed above $11^\circ$ dihedral. Figure \ref{fig:trim-inputs} shows the thrust and control surface deflections for the trimmed VFA model over a range of dihedral angles.
+The scenario of interest concerns the tracking of commands for the dihedral angle and vertical acceleration, using control inputs $\delta_{a,o}$ and $\delta_{e,c}$ only, so
+\begin{equation}
+	u_p = \begin{bmatrix}
+\delta_{a,o} & \; \delta_{e,c}
+\end{bmatrix}^T
+\end{equation}
+
+Control of the dihedral angle is desired as a large dihedral angle is inefficient for lift generation (and is open-loop unstable), while a small dihedral angle will require more control effort to hold, increasing drag and power requirements while also potentially twisting the aircraft. 
+
+The measurements available for control design are the pitch rate, dihedral angle, and vertical acceleration, leading to plant output matrices
+\begin{equation}
+\begin{aligned}
+y_p =& \, \Big[\; q \; \Big] \;= \Big[\: \text{Pitch rate (rad/s)} \:\Big] \\
+z_p =& \begin{bmatrix}
+\eta \\
+A_z
+\end{bmatrix} =\begin{bmatrix}
+	$Dihedral angle (rad)$\\
+	$Vertical acceleration (ft/s)$
+\end{bmatrix}		
+\end{aligned}
+\end{equation}
+and the augmented plant output matrix 
+\begin{equation}
+y = \begin{bmatrix}
+	q \\ \int{z_p - z_{cmd}}
+\end{bmatrix}
+\end{equation}
+
+The vehicle is trimmed at an airspeed of $68$ ft/s, altitude of $40,000$ ft, $2.8^\circ$ angle of attack and pitch angle, and dihedral angles ranging from $0$ to $20^\circ$ in $1^\circ$ increments. Figure \ref{fig:trim-poles} shows the poles of the linearized system for different dihedral angles, and Figure \ref{fig:trim-poles-zoom} shows how the system has unstable poles when trimmed above $11^\circ$ dihedral. Figure \ref{fig:trim-inputs} shows the thrust and control surface deflections for the trimmed VFA model over a range of dihedral angles.
 
 \begin{figure}[htbp]
 	\centering
@@ -399,37 +440,132 @@ This nonlinear VFA model is augmented with a linear actuator model so that slow 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.95\columnwidth]{../fig/trim-poles-zoom-2.pdf}
-	\caption{Dominant poles of linearized system}
+	\caption{Dominant poles of linearized system, which move into the right-half complex plane when $\eta > 11^\circ$}
 	\label{fig:trim-poles-zoom}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\columnwidth]{../fig/trim-inputs-2.pdf}
+	\includegraphics[width=0.95\columnwidth]{../fig/trim-inputs-3.pdf}
 	\caption{Inputs to system at different dihedral angles}
 	\label{fig:trim-inputs}
 \end{figure}
 
-\subsection{Shared Control}
-A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft, first proposed in \cite{thomsen2018shared}. In the following simulation, we demonstrate an example of how this is possible.
+This nonlinear VFA model is augmented with a linear actuator model corresponding to (\ref{eq:first_order_act}) in the nominal case and (\ref{eq:second_order_act}) in the presence of anomalous dynamics. The vehicle simulation with first-order actuators (\ref{eq:first_order_act}) uses time constants $\tau = 2 s$ and $\tau = 1 s$ in the control model and actual plant, respectively, corresponding to
+\begin{equation}
+D_1 = 2 I_2, \quad \Theta_1 = -1.5 I_2
+\end{equation}
+where $\Theta_1$ is unknown for control design. Simulation of the anomalous dynamics (\ref{eq:second_order_act}) uses second-order actuators with cutoff frequency $\omega_c = 2$ rad/s and damping ratio $\zeta = 0.7$, and $\omega_c = 1$ rad/s and $\zeta = 0.8$ in the control model and actual plant, respectively, corresponding to
+\begin{equation}
+\begin{bmatrix}
+	D_1 \\ D_2
+\end{bmatrix} = \begin{bmatrix}
+	4 I_2 \\ 2.8 I_2
+\end{bmatrix}, \quad \begin{bmatrix}
+	\Theta_1 \\ \Theta_2 
+\end{bmatrix} = \begin{bmatrix}
+	-3.75 I_2 \\ -2 I_2
+\end{bmatrix}
+\end{equation}
+where $\Theta_1$ and $\Theta_2$ are unknown for control design. In all the following numerical simulations, the uncertainty added to the control model for simulation is
+\begin{equation}
+\begin{gathered}
+\Theta_{p}^{T}=\begin{bmatrix}
+0.6 & -4.52 & \; 0 & \hfill 0.05 & \hfill 0.41 & \hfill 1.47\\
+0.1 & \hfill 1.83 & \; 0 & -0.02 & -0.35 & -0.59
+\end{bmatrix}\\ \Lambda = 0.2 I_2 \end{gathered}
+\end{equation}
 
-\subsection{Numerical Simulation}
-In addition to this ``nominal'' control design, in this simulation we consider a scenario in which the actuator dynamics change from first- to second-order (underdamped with a low bandwidth) during flight. This causes the nominal (RSLQR + adaptive) controller to lose tracking performance and begin to go unstable in the presence of the unmodeled dynamics. The idea is then to take advantage of a human operator/supervisor able to detect the anomalous behavior and switch the control to use a higher-order model, which mitigates the effect of the state- and input-dependent parametric uncertainties and recovers stability and tracking performance. It is noted that the system with second-order actuator dynamics is relative degree three. Both the ``nominal'' and higher-order controllers are designed following the MIMO adaptive output-feedback control methods developed by \cite{qu2016phd}.
 
-There are three stages to the simulation shown in Figure \ref{fig:sim}. For $0 \leq t < 600 s$, the vehicle operates in nominal operation with the adaptive controller and baseline RSLQR control design. At $t = 600 s$, a failure causes the vehicle's actuators to change from first-order to second-order. For $600 \leq t < 800 s$, the ``nominal'' controller is attempting to control the system which has severe unmodeled dynamics. In the shared control framework, the human operator notices that this closed-loop behavior is anomalous, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance.
+%\subsection{Shared Control}
+%A particular limitation of adaptive control -- and any model-based control design -- is that guarantees on stability margins and command tracking performance may not withstand the presence of unmodeled dynamics. There are many reasons where dynamics (which are either not present or ignored due to their time constants relative to controller bandwidth) that are not accommodated in control design may become more severe due to faults or dynamical anomalies during operation. For many autonomous systems, when an anomaly occurs, the solution is to transfer control to a human pilot (onboard or remote) to attempt to control the vehicle manually. This transfer to manual control, and the unfamiliarity of the anomalous dynamics to the pilot, may lead to loss of control of the vehicle. We suggest the use of a shared decision-making and control framework in which a human operator is responsible for detecting a dynamical anomaly but not for taking over control of the aircraft, first proposed in \cite{thomsen2018shared}. In the following simulation, we demonstrate an example of how this is possible.
+
+\subsection{Numerical Simulations}
+Numerical simulations have been carried out for the longitudinal and dihedral dynamics of the HALE VFA described in the preceding sections. 
+
+We first simulate nominal UAV operation (first-order actuators) to demonstrate the effectiveness of the adaptive autopilot during normal operation. We simulate three cases:
+\begin{description}
+	\item[Nom-1] Baseline RSLQR without uncertainty in control model
+	\item[Nom-2] Baseline RSLQR with uncertainty in control model ($\Theta_p$, $\Lambda_p$, and $\Theta_1$)
+	\item[Nom-3] Baseline RSLQR + MRAC with uncertainty in control model ($\Theta_p$, $\Lambda_p$, and $\Theta_1$)
+\end{description}
+
+These simulations, presented in Figs. \ref{fig:nom1}, \ref{fig:nom2}, and \ref{fig:nom3} respectively, show how the MRAC controller with output feedback described in (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) is able to recover the desired closed-loop performance in the presence of uncertainty of plant and actuator parameters. The closed-loop system with the baseline RSLQR controller does not lose stability in the presence of uncertainty (Fig. \ref{fig:nom2}), however the tracking performance suffers, especially for vertical acceleration tracking.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{../fig/3stage_sim_v3.png}
-	\caption{Command tracking and control effort across three stages of simulation}
-	\label{fig:sim}
+	\includegraphics[width=\columnwidth]{../fig/nom1.pdf}
+	\caption{Nom-1 simulation: RSLQR with no uncertainty in the control model}
+	\label{fig:nom1}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\columnwidth]{../fig/3stage_sim_err_v3.png}
-	\caption{Norm of output error across three stages of simulation}
-	\label{fig:err}
+	\includegraphics[width=\columnwidth]{../fig/nom2.pdf}
+	\caption{Nom-2 simulation: RSLQR with uncertainties $\Theta_p$, $\Lambda_p$, and $\Theta_1$}
+	\label{fig:nom2}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/nom3.pdf}
+	\caption{Nom-3 simulation: RSLQR + MRAC with uncertainties $\Theta_p$, $\Lambda_p$, and $\Theta_1$}
+	\label{fig:nom3}
+\end{figure}
+
+We now simulate several responses to the introduction of a severe anomaly to demonstrate the effectiveness of the shared control response described in Section \ref{sec:shared_ctrl}, and compare its performance to alternative responses. The severe anomaly which we introduce is the change in actuator dynamics from the uncertain first-order dynamics (\ref{eq:first_order_act}) to the uncertain second-order dynamics (\ref{eq:second_order_act}). The three anomaly responses we consider are
+\begin{description}
+	\item[AR-1 (Passive/Autonomous)] The RSLQR+MRAC autopilot continues without any intervention from remote human supervisor
+	\item[AR-2 (Manual Control)] The human operator takes over manual control of the affected vehicle
+	\item[AR-3 (Shared Control)] Responsibilities are shared between the human pilot and autopilot to safely recover from introduction of unmodeled dynamics
+\end{description}
+
+In all the following simulations, the vehicle operates in nominal operation with the adaptive controller and baseline RSLQR control design for $0 \leq t < 600 s$. At $t = 600 s$, the anomaly is introduced suddenly, corresponding to a failure which causes the vehicle's actuators to change from first-order to second-order. Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR-1) in which the human operator ignores controller performance degradation and allows the adaptive controller to continue in the presence of severe unmodeled dynamics. Most notably, the closed-loop system loses stability leading to large oscillations in vehicle state and eventual structural failure of the VFA after $t = 960s$, or 6 minutes after the anomaly introduction. Also notable are the rapid increase in magnitude of the adaptive parameters and the magnitudes of both tracking and measurement output error signals after the introduction of anomalous dynamics.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar1.pdf}
+	\caption{AR-1 simulation: passive response to dynamical anomaly results in structural failure after 6 minutes}
+	\label{fig:ar1}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar1-params.pdf}
+	\caption{AR-1 simulation: adaptive parameters diverge as controller struggles to adapt to unmodeled dynamics}
+	\label{fig:ar1-params}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar1-err.pdf}
+	\caption{AR-1 simulation: model-following output error and command tracking error grow due to anomalous dynamics}
+	\label{fig:ar1-err}
+\end{figure}
+
+Numerical simulations of the AR-2 response (purely manual control) are not carried out, as they are not deterministic and require high-fidelity human-in-the-loop experiments to characterize. The limitations of such a response -- in which the human operator's role changes suddenly from ``on-the-loop'' to ``in-the-loop'' with unfamiliar dynamics -- are discussed in the earlier sections of this paper.
+
+The AR-3 (shared control) anomaly response simulation is shown in Figs. \ref{fig:ar3-sim}--\ref{fig:ar3-err}. After the anomaly is introduced at $t = 600 s$, the ``nominal'' controller attempts to control the system which has severe unmodeled dynamics until $t = 800 s$, which is the culmination of the human operator's action. In the shared control framework, the human operator notices the anomalous closed-loop control behavior, and via an interface switches the controller to a higher relative degree model in the control design. For $t \geq 800 s$, the vehicle remains under autonomous control and is able to recover stability and tracking performance. For comparison, the time of structural failure in the passive anomaly response is plotted as a line at $t = 960 s$.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar3.pdf}
+	\caption{AR-3 simulation: shared response to the dynamical anomaly results in recovery of vehicle performance}
+	\label{fig:ar3-sim}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar3-params.pdf}
+	\caption{AR-3 simulation: the change in control model at $t = 800 s$ stops the divergence of adaptive parameters}
+	\label{fig:ar3-params}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{../fig/ar3-err.pdf}
+	\caption{AR-3 simulation: the change in control model at $t = 800 s$ stops the error growth seen after the anomaly}
+	\label{fig:ar3-err}
 \end{figure}
 
 \bibliography{thomsen-cphs-2018-bib}
