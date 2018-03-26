@@ -902,13 +902,17 @@ classdef SimVFA < handle
                     SO.psi1_0 = zeros(num_state-num_input,num_input);
                     SO.psi2_0 = zeros(num_state,num_input);
                     SO.psi21_0 = zeros(num_output_i,num_output_i);
-                    SO.xm_0 = zeros(num_state_i,1);
                 else
                     CA = vfa.simOpt.ada_carry;
                     SO.lambda_0 = CA.lambda;
                     SO.psi1_0 = CA.psi1;
                     SO.psi2_0 = CA.psi2;
                     SO.psi21_0 = CA.psi21;
+                end
+                
+                if ((SO.tstart == 0) || isempty(vfa.simOpt.xm_carry))
+                    SO.xm_0 = zeros(num_state_i,1);
+                else
                     SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
                 end
 
@@ -960,16 +964,20 @@ classdef SimVFA < handle
                     SO.psi1_0 = zeros(num_state-num_input,num_input);
                     SO.psi2_0 = zeros(num_state,num_input);
                     SO.psi21_0 = zeros(num_output_i,num_output_i);
-                    SO.xm_0 = zeros(num_state_i,1);
                 else
                     CA = vfa.simOpt.ada_carry;
                     SO.lambda_0 = CA.lambda;
                     SO.psi1_0 = CA.psi1;
                     SO.psi2_0 = CA.psi2;
                     SO.psi21_0 = CA.psi21;
-                    SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
                 end
 
+                if ((SO.tstart == 0) || isempty(vfa.simOpt.xm_carry))
+                    SO.xm_0 = zeros(num_state_i,1);
+                else
+                    SO.xm_0 = [SO.xm_carry; zeros(num_state_i-length(SO.i_state_sel),1)];
+                end
+                
                 % actuator dynamics (real dynamics, not nominal)
                 SO.Aact = SO.eig_act*eye(2);
                 SO.Bact = -SO.eig_act*eye(2);

@@ -73,7 +73,7 @@ clear; clc;
 
 opt.dataPath   = ['data', filesep]; % where to look for/store .mat files 
                                     % (relative to working directory)
-opt.adaFlag    = true;              % use adaptive control?
+opt.adaFlag    = false;              % use adaptive control?
 opt.uncertFlag = true;              % uncertainty in dynamics?
 opt.reComp     = true;              % trim, linearize, recompute controller
 opt.pActOrder  = 1;                 % order of plant actuator dynamics (1 or 2)
@@ -88,7 +88,7 @@ opt = [];
 
 opt.dataPath   = ['data', filesep]; % where to look for/store .mat files 
                                     % (relative to working directory)
-opt.adaFlag    = true;              % use adaptive control?
+opt.adaFlag    = false;              % use adaptive control?
 opt.uncertFlag = true;              % uncertainty in dynamics?
 opt.reComp     = true;              % trim, linearize, recompute controller
 opt.pActOrder  = 2;                 % order of plant actuator dynamics (1 or 2)
@@ -105,11 +105,11 @@ init_cond.xm_carry = vfa1.simOutObj.xm(1:length(vfa1.simOpt.i_state_sel), ind1);
 init_cond.cmd_carry = [vfa1.simOutObj.r_cmd(:,ind1); vfa1.simOutObj.r_cmd_dot(:,ind1)];
 init_cond.act_carry = vfa1.simOutObj.xact(:,ind1);
 
-ada.lambda = vfa1.simOutObj.lambda_ada(:,:,ind1);
-ada.psi1 = vfa1.simOutObj.psi1_ada(:,:,ind1);
-ada.psi2 = vfa1.simOutObj.psi2_ada(:,:,ind1);
-ada.psi21 = vfa1.simOutObj.psi21_ada(:,:,ind1);
-init_cond.ada_carry = ada;
+% ada.lambda = vfa1.simOutObj.lambda_ada(:,:,ind1);
+% ada.psi1 = vfa1.simOutObj.psi1_ada(:,:,ind1);
+% ada.psi2 = vfa1.simOutObj.psi2_ada(:,:,ind1);
+% ada.psi21 = vfa1.simOutObj.psi21_ada(:,:,ind1);
+% init_cond.ada_carry = ada;
 
 vfa2 = SimVFA(opt, init_cond);  % initialize and setup the simulation
 vfa2.runSim();       % run the simulation
@@ -119,7 +119,7 @@ opt = [];
 
 opt.dataPath   = ['data', filesep]; % where to look for/store .mat files 
                                     % (relative to working directory)
-opt.adaFlag    = true;              % use adaptive control?
+opt.adaFlag    = false;              % use adaptive control?
 opt.uncertFlag = true;              % uncertainty in dynamics?
 opt.reComp     = true;              % trim, linearize, recompute controller
 opt.pActOrder  = 2;                 % order of plant actuator dynamics (1 or 2)
@@ -413,6 +413,7 @@ ylim([0 4e-3])
 line([SOO1.t_sim(ind1) SOO1.t_sim(ind1)],ylim,'Color',[0 0 0],'LineStyle','--', 'LineWidth', 1, 'HandleVisibility', 'off');
 line([vfa2.simOutObj.t_sim(end) vfa2.simOutObj.t_sim(end)], ylim, 'Color',[0.3 0.3 0.3],'LineStyle','--', 'LineWidth', 1, 'HandleVisibility', 'off');
 yyaxis right
+ylim([0 15])
 plot(SOO.t_sim, err_norm_mis2, 'LineWidth', 1.5, 'Color', c2); grid on; hold on;
 title('Output Error Signals: $\|y(t)-y_m(t)\|_2$ and $\|z(t)-z_{cmd}(t)\|_2$', 'interpreter','latex')
 xlabel('Time (s)')
