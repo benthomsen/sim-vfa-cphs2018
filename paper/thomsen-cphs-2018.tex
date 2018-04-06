@@ -11,7 +11,7 @@
 \begin{document}
 \begin{frontmatter}
 	
-\title{Shared Decision-Making and Adaptive Control for Anomaly Mitigation}
+\title{Shared Decision-Making Between Adaptive Autopilots and Human Operators for Anomaly Mitigation}
 
 \thanks[footnoteinfo]{This work was supported by the Boeing Strategic University Initiative.}
 
@@ -27,7 +27,7 @@
 \begin{abstract}
 %This paper outlines a shared decision-making and control framework between adaptive controllers and human supervisors, able to recover control performance following anomalous changes in plant dynamics. Model reference adaptive control relies on accurate understanding of plant dynamics to guarantee stability and performance, and these guarantees are lost when severe anomalies introduce unexpected and unmodeled dynamics to the plant. We introduce a shared control architecture in which a human supervisor diagnoses anomalous closed-loop dynamic behavior and makes suitable changes to the control model of the system in order to recover nominal performance. This shared response allows for continued autonomous adaptive control without transferring control responsibilities to the human operator. Anomaly response with shared control is demonstrated on an unmanned very flexible aircraft (VFA) platform, whose actuators suddenly change from first-order to second-order.
 %Changes to plant dynamics during operation, whether controlled manually by a human or autonomously by model-based control algorithms, can lead to instability and failure. 
-The control of plants having anomalous dynamics is difficult for both human operators and autonomous model-based control algorithms. We introduce a shared decision-making and control framework giving supervisory human operators a targeted responsibility in the mitigation of dynamical anomalies, enabling the recovery of closed-loop system stability and command tracking performance without transferring control responsibilities to the human operator. Anomaly response with shared control is demonstrated on an unmanned aircraft platform, whose actuators suddenly change from first-order to second-order.
+The control of plants having anomalous dynamics is difficult for both human operators and autonomous model-based control algorithms. We introduce a shared decision-making and control framework based on adaptive control which gives supervisory human operators a targeted responsibility in the mitigation of dynamical anomalies and enables the recovery of closed-loop system stability and command tracking performance without transferring control responsibilities to the human operator. Anomaly response with shared control is demonstrated on an unmanned aerial vehicle, whose actuators suddenly change from first-order to second-order.
 \end{abstract}
 \begin{keyword}
 adaptive control, output feedback, anomaly detection and recovery, high relative degree, shared control
@@ -37,14 +37,18 @@ adaptive control, output feedback, anomaly detection and recovery, high relative
 
 \section{Introduction}
 %Adaptive control and modeling assumptions.
-Model-based feedback control techniques, where control design is carried out based on \textit{a priori} knowledge of system dynamics, have become ubiquitous in industries such as aerospace, due to their ability to specify characteristics of the closed-loop system dynamics, ensure stability, and certify optimality over a range of operating conditions. The field of adaptive control addresses a limitation of control based on models of plant dynamics, namely that parameters used to model the plant may be uncertain. Model reference adaptive control (MRAC), as described by \cite{narendra2012stable}, accommodates these parametric uncertainties through online tuning of control parameters to ensure specified closed-loop dynamics are realized. Recent advances in MRAC have included the development of closed-loop reference models (CRMs) by \cite{gibson2013adaptive}, which greatly improves transient performance during online learning. While adaptive control is able to guarantee stability and tracking convergence in the presence of parametric uncertainties, other properties of the system -- such as the order of a linear system -- are assumed to be known \textit{a priori} for control design. 
+Model-based feedback control designs, based on \textit{a priori} knowledge of system dynamics, are ubiquitous in industries such as aerospace, as they provide the ability to specify characteristics of the closed-loop system dynamics, and ensure stability, optimality, and robustness over a range of operating conditions. The field of adaptive control addresses a limitation of control based on models of plant dynamics, namely that parameters used to model the plant may be uncertain. Model reference adaptive control (MRAC), as described by \cite{narendra2012stable}, accommodates these parametric uncertainties through online tuning of control parameters to ensure specified closed-loop dynamics are realized. Recent advances in MRAC have included the development of closed-loop reference models (CRMs) by \cite{gibson2013adaptive}, which greatly improves transient performance during online learning. While adaptive control is able to guarantee stability and tracking convergence in the presence of parametric uncertainties, other properties of the system -- such as the order of a linear system -- are assumed to be known \textit{a priori} for control design. 
 %In practice, dynamical behavior is excluded from the control model for simplicity and ease of analysis if it sufficiently fast relative to the closed-loop system bandwidth.
 
 %Human pilots and operators, and their struggles with unfamiliar, off-nominal dynamics. %Remote human pilots and further difficulties
-Human operators of dynamical systems also develop mental models of expected plant behavior, often over long periods of active learning. Human pilots, for example, have been modeled and studied extensively to examine their use of information feedback and ability to adapt their control strategies to unfamiliar situations (for example, \cite{mcruer1967review, phatak1969model, hess2015modeling, zaal2016manual}). In stressful situations, human pilots tend to apply high control gains, which coupled with certain dynamical anomalies increases the risk of loss of control (\cite{hess1997unified}). \cite{belcastro2014preliminary} found that the majority of transport aircraft loss of control incidents over a 15-year period involved inaction or improper action by the flight crew. \cite{endsley1996automation} points to pilot error following a transition from autonomous to manual control (often as the result of an anomaly) as a common factor in loss of control incidents. Issues with manual control of dynamical systems are exacerbated when the human operator is physically separated from the dynamics of the system, as is the case with remotely piloted vehicles (\cite{mccarley2004human, tvaryanas2008recurrent}). The additional complexities involved with remote operation include a lack of sensory and perceptive cues regarding the plant state and its environment, time delays between the vehicle and operator for both sensing and actuation, and difficulty ascertaining the open-loop dynamical response between control input and plant output (\cite{lam2008haptic}). 
+Human operators of dynamical systems also develop mental models of expected plant behavior, often over long periods of active learning. Human pilots, for example, have been modeled and studied extensively to examine their use of information feedback and ability to adapt their control strategies to unfamiliar situations (see, for example, \cite{mcruer1967review, phatak1969model, hess2015modeling, zaal2016manual}). In stressful situations, human pilots tend to apply high control gains, which coupled with certain dynamical anomalies increases the risk of loss of control (\cite{hess1997unified}). \cite{belcastro2014preliminary} found that the majority of transport aircraft loss of control incidents over a 15-year period involved inaction or improper action by the flight crew. \cite{endsley1996automation} points to pilot error following a transition from autonomous to manual control (often as the result of an anomaly) as a common factor in loss of control incidents. Issues with manual control of dynamical systems are exacerbated when the human operator is physically separated from the dynamics of the system, as is the case with remotely piloted vehicles (\cite{mccarley2004human, tvaryanas2008recurrent}). The additional complexities involved with remote operation include a lack of sensory and perceptive cues regarding the plant state and its environment, time delays between the plant and operator for both sensing and actuation, and difficulty ascertaining the open-loop dynamical response between control input and plant output (\cite{lam2008haptic}). 
 
-%HALE VFA.
-High altitude long endurance (HALE) aerial platforms, such as the solar-electric NASA/AeroVironment Helios and Facebook Aquila, have unique design considerations to satisfy goals of uninterrupted weeks- or months-long operation. To reduce power draw, HALE aircraft designs save mass by allowing wings to bend, and may be classified as very flexible aircraft (VFA). Compared to typical fixed-wing aircraft, these aircraft operate at low speed, and may use low-bandwidth actuators which must be accounted for in control design. HALE VFA platforms are likely to have significant modeling uncertainties and online variation in dynamics due to flexible effects and degradation over long-term operation. Although these platforms are unmanned aerial vehicles (UAVs), they require supervision from remote human operators.
+This paper investigates the use of a combination of 
+\begin{enumerate}[label=(\alph*)]
+	\item autonomous control methodologies
+	\item a remote human supervisor
+\end{enumerate}
+to mitigate the effects of severe dynamical anomalies. We refer to this class of anomaly response as a shared control response. This work builds on anomaly response frameworks using adaptive autopilots and on-board human pilots reported in \cite{farjadian2017bumpless} and \cite{thomsen2018shared}, bringing in the use of output feedback for control and considering the case of remote human operation. In Section \ref{sec:problem}, the control problem investigated in this paper is described. Our explicit shared control solution to this problem is described in Section \ref{sec:shared_ctrl}. The shared decision-making and control framework is applied to the longitudinal control of high altitude, long endurance (HALE) unmanned aerial vehicles (UAVs) and simulated numerically in Section \ref{sec:vfa}. We summarize the work in Section \ref{sec:summary}.
 
 \section{Problem Statement}\label{sec:problem}
 %Control of plant with unknown/uncertain parameters. 
@@ -55,7 +59,9 @@ We consider linear multi-input multi-output (MIMO) plant models of the form
 y_p = C_p x_p, \qquad z_p = C_{pz} x_p \label{eq:plant_dynamics}
 \end{gathered}
 \end{equation}
-where uncertain dynamics lead to the introduction of unknown $\Theta_p$ and $\Lambda_p$ in the plant model, $y_p$ are measurement outputs, and $z_p$ are regulated outputs which we would like to follow prescribed commands. It is assumed that the matrix $CB$ has full rank, and thus the plant has uniform relative degree one (see \cite{qu2016adaptive}). In addition to the dynamics (\ref{eq:plant_dynamics}), the plant's actuators have the first-order dynamics
+where $x_p$ is the plant state, $u_p$ is the plant input, $y_p$ is measured output, and $z_p$ is regulated output. Uncertain dynamics lead to the introduction of unknown $\Theta_p$ and $\Lambda_p$ in the plant model. It is assumed that the matrix $CB$ has full rank, and thus the plant has uniform relative degree one (see \cite{qu2016adaptive}). The control goal is for regulated output $z_p$ to follow prescribed external command, $z_{cmd}(t)$. 
+
+In addition to the dynamics (\ref{eq:plant_dynamics}), the plant's actuators have the first-order dynamics
 \begin{equation}
 	\dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u \label{eq:first_order_act}
 \end{equation}
@@ -68,31 +74,27 @@ Consider the occurrence of an anomaly which causes a sudden change in actuator d
 \end{equation}
 This change in dynamics means that the the structure of the model used for control design is no longer accurate, and the autonomous controller may lose stability and command tracking ability.
 
-In addition to an autonomous controller which generates control input $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}), a human supervisor is tasked with the high-level operation of the plant (\ref{eq:plant_dynamics}), including mission and task planning (commanding its mode of operation) and monitoring to ensure safe and anomaly-free operation. In this paper, we consider \textit{remote} human operators who cannot sense the vehicle state and dynamics directly through vestibular pathways. The human supervisor may be responsible for the supervision of multiple plant instances, as illustrated in Fig. \ref{fig:uav_supervisor} for the case of HALE VFA platforms. Operation is thus \textit{human-on-the-loop} as opposed to \textit{human-in-the-loop}, as the operator has no role in feedback control. 
+In addition to an autonomous controller which generates control input $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}), a human supervisor is tasked with the high-level operation of the plant (\ref{eq:plant_dynamics}), including mission and task planning (commanding its mode of operation) and monitoring to ensure safe and anomaly-free operation. In this paper, we consider \textit{remote} human operators who cannot sense the vehicle state and dynamics directly through vestibular pathways. The human supervisor may be responsible for the supervision of multiple plant instances, as illustrated in Fig. \ref{fig:uav_supervisor} for the case of an unmanned aerial vehicle (UAV) platform. Operation is nominally \textit{human-on-the-loop} as opposed to \textit{human-in-the-loop}, as the operator does not directly command actuator input. 
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.95\columnwidth]{../fig/uav_supervisor.pdf}
-	\caption{Supervisory operation of a fleet of HALE UAVs}
+	\caption{Supervisory remote operation of HALE UAVs}
 	\label{fig:uav_supervisor}
 \end{figure}
 
-The remote human supervisor has information on plant sensor measurements, state estimate, tracking performance, and health (via visual, haptic, and/or auditory interfaces). \textit{Human-in-the-loop} operation is possible via remote controls, allowing the operator to actuate the plant by manually providing $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). The sensing and actuation by the remote human supervisor include time delays $\tau_s, \tau_a > 0$, respectively.
+The remote human supervisor has information on plant sensor measurements, state estimate, tracking performance, and health (via visual, haptic, and/or auditory interfaces). \textit{Human-in-the-loop} operation is possible via remote controls, allowing the operator to actuate the plant by manually providing $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}). Manual remote control introduces communication time delays $(\tau_y, \tau_u) > 0$, in sensing and actuation, respectively.
 
-The problem we investigate is whether we can use a suitable combination of 
-\begin{enumerate}[label=(\alph*)]
-	\item autonomous control methodologies
-	\item a remote human supervisor
-\end{enumerate}
-  to successfully mitigate the anomalous dynamics (\ref{eq:second_order_act}) and restore tracking performance in the presence of uncertainty. We refer to this class of anomaly response as a shared control response. This work builds on anomaly response frameworks using adaptive autopilots and on-board human pilots reported in \cite{farjadian2017bumpless} and \cite{thomsen2018shared}.
+The problem we address is whether shared decision-making and control between autonomous control algorithms and human operators can enable the successful mitigation of anomalous dynamics (\ref{eq:second_order_act}) and restore tracking performance in the presence of uncertainty.
 
 %Recovery of closed-loop autonomous control performance following the introduction of severe anomalous dynamics to the plant. 
 
 %Human supervisor is present (remotely), but should not be given control responsibilities following anomaly.
 
-\section{Shared Anomaly Response}\label{sec:shared_ctrl}
+\section{Shared Controller}\label{sec:shared_ctrl}
 %Overview of shared control architecture. What is assumed?
-We introduce a shared decision-making and control framework with the goal of enabling the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of anomalous, unmodeled dynamics as described in the preceding section. The shared control framework is based on a combination of actions by UAV autopilots and remote human operators. MRAC autopilots and complementary higher-level motion planning algorithms allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators monitor the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to communication delays and a weakened understanding of the vehicle dynamics, state, and environment, due to the remote nature of the task. Our shared anomaly response involves the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. In Section \ref{subsec:sc_adaptive}, we describe two adaptive autopilot designs which in combination with the human operator whose precise role is described subsequently in Section \ref{subsec:sc_human}, will solve the problem presented in Section \ref{sec:problem}.
+%We introduce a shared decision-making and control framework with the goal of enabling the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of anomalous, unmodeled dynamics as described in the preceding section. The shared control framework is based on a combination of actions by UAV autopilots and remote human operators. MRAC autopilots and complementary higher-level motion planning algorithms allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators monitor the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to communication delays and a weakened understanding of the vehicle dynamics, state, and environment, due to the remote nature of the task. Our shared anomaly response involves the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. In Section \ref{subsec:sc_adaptive}, we describe two adaptive autopilot designs, which, in combination with the human operator whose precise role is described subsequently in Section \ref{subsec:sc_human}, will solve the problem presented in Section \ref{sec:problem}.
+We introduce a shared decision-making and control framework with the goal of enabling the safe operation of dynamical systems subject to both parametric uncertainties and the sudden introduction of anomalous, unmodeled dynamics as described in the preceding section. The shared control framework is based on a combination of actions by autonomous control algorithms and remote human operators. MRAC autopilots and complementary higher-level motion planning algorithms allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators monitor the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to communication delays and a weakened understanding of the vehicle dynamics, state, and environment, due to the remote nature of the task. Our shared anomaly response involves the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. In Section \ref{subsec:sc_adaptive}, we describe two adaptive autopilot designs, which, in combination with the human operator whose precise role is described subsequently in Section \ref{subsec:sc_human}, will solve the problem presented in Section \ref{sec:problem}.
 
 %Division of responsibilities.
 
@@ -117,20 +119,20 @@ y=Cx,\qquad z=C_{z}x
 \end{equation}
 where $x\in\mathbb{R}^{n}$, $u\in\mathbb{R}^{m}$, $y\in\mathbb{R}^{p}$ are redefined states, inputs and outputs, respectively. 
 %A full justification for this form of the plant can be found in \cite{qu2016phd, qu2016adaptive}. 
-This plant contains unknown matrices $\Psi_1$, $\Psi_r$, and $\Lambda$, which hold the state-dependent plant uncertainties, state-dependent actuator dependencies, and actuator effectiveness, respectively. The exact forms of $B_r$ and $\Psi_r$ depend on whether the actuators are first-order (\ref{eq:first_order_act}) or second-order (\ref{eq:second_order_act}), and the subscript $r$ indicates the relative degree of the augmented plant. It is noted that the augmented plant model which arises from the inclusion of actuator model (\ref{eq:first_order_act}) in the plant (\ref{eq:plant_dynamics}) has relative degree two, while the augmented plant model associated with the inclusion of actuator model (\ref{eq:second_order_act}) has relative degree three. 
+This plant contains unknown matrices $\Psi_1$, $\Psi_r$, and $\Lambda$, which hold the state-dependent plant uncertainties, state-dependent actuator dependencies, and actuator effectiveness, respectively. The subscript $r$ indicates the relative degree of the augmented plant, and the definitions of $B_r$ and $\Psi_r$ depend on whether the actuators are first-order (\ref{eq:first_order_act}) or second-order (\ref{eq:second_order_act}). It is noted that the augmented plant model which arises from the inclusion of actuator model (\ref{eq:first_order_act}) in the plant (\ref{eq:plant_dynamics}) has relative degree two, while the augmented plant model associated with the inclusion of actuator model (\ref{eq:second_order_act}) has relative degree three. 
 
 For control design, closed-loop reference models (\cite{gibson2013adaptive}) are designed as
 \begin{equation}
 \dot{x}_m = A_m x_m + B_z z_{cmd} + L e_y + \mathcal{F}_r(t), \quad y_m = C x_m
 \end{equation}
-where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a baseline feedback control gain designed for the system without uncertainty using RSLQR, as described by \cite{lavretsky2013robust}. $L$ is a Luenberger-like feedback gain, and $\mathcal{F}_r(t)$ is a function used when $r \geq 2$ to recover stability properties in the presence of uncertainty. 
+where $e_y = y - y_m$, $A_m = A - B_r K^T$ with $K\in\mathbb{R}^{n\times m}$ is a baseline feedback control gain designed for the system without uncertainty using RSLQR, as described by \cite{lavretsky2013robust}. $L$ is a Luenberger-like residual feedback gain, and $\mathcal{F}_r(t)$ is a function used when $r \geq 2$ to recover stability properties in the presence of uncertainty. 
 
 In what follows, control designs for the ``nominal'' controller and for the ``recovery'' controller are summarized, assuming (for simplicity, but without loss of generality) that the augmented plant model (\ref{eq:augmented_plant}) is square (i.e. $m = p$). Readers are referred to \cite{qu2016phd} and \cite{qu2016adaptive} for a more thorough treatment of the adaptive control designs in this article. 
  
 \subsubsection{Nominal Adaptive Control Design}
 %Relative degree two MIMO adaptive control.
 % need a11, a10, B_1^a, Cbar, S, Rinv, epsilon, L, two tuner laws, u, F
-The control design for the plant with first-order actuator dynamics summarized by giving definitions for CRM residual gain matrix $L$, function $\mathcal{F}_2(t)$, control law $u(t)$, and parameter adaptation. Note that $B_2$ represents $B_r$ from (\ref{eq:augmented_plant}) for this relative degree two plant. 
+The control design for the plant with first-order actuator dynamics is summarized by providing definitions for CRM residual gain matrix $L$, function $\mathcal{F}_2(t)$, control law $u(t)$, and parameter adaptation. Note that $B_2$ represents $B_r$ from (\ref{eq:augmented_plant}) for this relative degree two plant. 
 
 The feedback matrix $L$ is designed as follows. We define the ``relative degree one input path''
 \begin{equation}
@@ -150,7 +152,7 @@ and a filtered version of this signal, $\overline{e}_{sy}(t)$, given in the form
 \begin{equation}
 (\alpha_0 + \alpha_1 \frac{d}{dt}) \big\{ \overline{e}_{sy}(t) \big\} = \alpha_1 e_{sy}(t). \label{eq:e_sy_bar}
 \end{equation}
-It is worth noting that this can be represented in the Laplace $s$-domain as
+It is worth noting that this can be represented in the Laplace $s$-domain with a first-order filter
 \begin{equation*}
 	\overline{E}_{sy}(s) = \frac{\alpha_1}{\alpha_1 s + \alpha_0} E_{sy}(s).
 \end{equation*}
@@ -183,7 +185,7 @@ where $\hat{\Psi}_{\Lambda}(t)$ is a matrix of adaptive parameters. The laws for
 with diagonal adaptation gains $\Gamma_{m}, \;\Gamma_{\Lambda} > 0$. We note that the derivatives of the adaptive parameters, computed in (\ref{eq:rd2-adaptation}), are used to implement (\ref{eq:F2}) and (\ref{eq:u_rd2}) with the product rule of differentiation.
 
 \subsubsection{Recovery Adaptive Control Design}
-Control design with the second-order actuator model is similar to that described above, but requires modifications to ensure strict positive realness of the transfer matrix of the model-following error dynamics. 
+Control design with the second-order actuator model is similar to the nominal control design, but requires modifications to ensure strict positive realness of the transfer matrix of the model-following error dynamics. 
 
 The definition of $L$ is modified by replacing $B_1^a$ in (\ref{eq:rd2-b1a}) with
 \begin{equation}
@@ -260,7 +262,7 @@ where
 \end{equation}
 is a matrix of adaptive parameters. 
 
-In this controller, the laws for parameter adaptation use second-order tuners as in \cite{qu2016phd}. We first define a regressor vector $\nu(t)$ of filtered error signals
+In this controller, the adaptive parameters are adjusted using second-order tuners as in \cite{qu2016phd}. We first define a regressor vector $\nu(t)$ of filtered error signals
 \begin{equation}
 	\nu(t) = \begin{bmatrix}
 		(\overline{e}_{\mathcal{I}y}^{[1][2]} - \overline{e}_{sy}^{[1]} - \overline{e}_{sy}^{[1][2]})^T, & \quad (-\overline{e}_{sy}^{[2]})^T, & \quad (\overline{e}_{\mathcal{I}y}^{[1]})^T
@@ -315,7 +317,7 @@ where $C_T^{\delta}, C_T^{\delta \delta} \in \mathbb{R}^{m \times 2m}$ are block
 
 \subsection{Human Supervisor}\label{subsec:sc_human}
 %Notices, reacts, instructs.
-We task the remote human supervisor with the following three responsibilities for shared anomaly response on the HALE VFA platform.
+We task the remote human supervisor with the following three responsibilities for shared anomaly response.
 \begin{enumerate}[label=\arabic*.]
 	\item Timely detection and characterization of anomalous closed-loop dynamical behavior
 	\item Isolation of control loop with anomalous behavior (i.e. longitudinal or lateral-directional)
@@ -329,14 +331,17 @@ The first task requires an attentive human operator able to discern that
 	\item it may be possible to recover stability and performance via corrective action.
 \end{enumerate}
 
-The second task requires a human operator with knowledge and familiarity with the VFA dynamics and control structure to understand which control loop (e.g. pitch mode, roll mode, airspeed) is the source of the anomalous dynamics. 
+The second task requires a human operator with knowledge and familiarity with the plant dynamics and control structure to understand which control loop (e.g. pitch mode, roll mode, airspeed, in a fixed-wing UAV application) is the source of the anomalous dynamics. 
 
 The final task for the trained remote human operator is the transfer of this diagnosis to the autopilot, by changing the relevant controller to its ``recovery'' mode.
 
 Note that while the remote human operator is assumed to have the training and controls necessary to disable all autopilot functionality and control the vehicle manually, this shared anomaly response deliberately circumvents any \textit{human-in-the-loop} (manual) control. 
 
 \section{Anomaly Response Simulations} \label{sec:vfa}
-The shared control solution introduced in Section \ref{sec:shared_ctrl} is applied to the problem introduced in Section \ref{sec:problem} on a high altitude, long endurance (HALE) very flexible aircraft (VFA) model. The aircraft model used in simulation, developed by \cite{gibson2011modeling} for longitudinal control design applications, is rendered in Figure \ref{fig:vfa} and described in Section \ref{subsec:vfa_model}. The results of numerical simulations on the control and anomaly recovery with this MIMO plant are then presented in Section \ref{subsec:sims}, comparing the shared anomaly response to alternative anomaly responses.
+%HALE VFA.
+The shared control solution introduced in Section \ref{sec:shared_ctrl} is applied to the problem introduced in Section \ref{sec:problem} on a high altitude, long endurance (HALE) model. HALE aerial platforms, such as the solar-electric NASA/AeroVironment Helios and Facebook Aquila, have unique design considerations to satisfy goals of uninterrupted weeks- or months-long operation. To reduce power draw, HALE aircraft designs save mass by allowing wings to bend, and may be classified as very flexible aircraft (VFA). Compared to typical fixed-wing aircraft, these aircraft operate at low speed, and may use low-bandwidth actuators which must be accounted for in control design. HALE VFA platforms are likely to have significant modeling uncertainties and online variation in dynamics due to flexible effects and degradation over long-term operation. Although these vehicles are unmanned, they require supervision from remote human operators.
+
+The aircraft model used in simulation, developed by \cite{gibson2011modeling} for longitudinal control design applications, is rendered in Figure \ref{fig:vfa} and described in Section \ref{subsec:vfa_model}. The results of numerical simulations on the control and anomaly recovery with this MIMO plant are then presented in Section \ref{subsec:sims}, comparing the shared anomaly response to alternative anomaly responses.
 
 \subsection{Aircraft Model}\label{subsec:vfa_model}
 \begin{figure}[htbp]
@@ -552,7 +557,7 @@ Results of the AR-3 (shared control) anomaly response simulation are shown in Fi
 	\label{fig:ar3-err}
 \end{figure}
 
-\section{Summary}
+\section{Summary}\label{sec:summary}
 This work develops a shared control framework between adaptive autopilots and remote human operators of aerial vehicles. The autonomous control design (autopilot) builds on two recent advances in adaptive control theory, namely the use of closed-loop reference models for improved transient performance, and computationally efficient control designs for output-feedback systems having relative degree two or greater. The targeted role of the human operator is motivated by unmanned aerial platforms remotely supervised by humans (``human-on-the-loop''), and the limitations that come with remote manual control. Under our shared control framework, the human operator and adaptive autopilot designs form a shared response to dynamical anomalies. The shared control response is demonstrated in simulation on the longitudinal dynamics of an unmanned HALE VFA model. 
 
 \bibliography{thomsen-cphs-2018-bib}
