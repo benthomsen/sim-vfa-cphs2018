@@ -88,7 +88,7 @@ In addition to an autonomous controller which generates control input $u(t)$ in 
 %Overview of shared control architecture. What is assumed?
 %We introduce a shared decision-making and control framework with the goal of enabling the safe operation of HALE UAVs subject to both parametric uncertainties and the sudden introduction of anomalous, unmodeled dynamics as described in the preceding section. The shared control framework is based on a combination of actions by UAV autopilots and remote human operators. MRAC autopilots and complementary higher-level motion planning algorithms allow for continuous autonomous operation of the UAVs under nominal conditions. Remote human operators monitor the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. The remote piloting of the vehicles, however, is a daunting task due to communication delays and a weakened understanding of the vehicle dynamics, state, and environment, due to the remote nature of the task. Our shared anomaly response involves the remote human operator to diagnose and correct for the dynamical anomaly without taking over manual control of the vehicle. In Section \ref{subsec:sc_adaptive}, we describe two adaptive autopilot designs, which, in combination with the human operator whose precise role is described subsequently in Section \ref{subsec:sc_human}, will solve the problem presented in Section \ref{sec:problem}.
 %We introduce a shared decision-making and control framework in a flight platform subject to both parametric uncertainties and the sudden introduction of anomalous, unmodeled dynamics as described in the preceding section. 
-The shared control framework we propose is designed so as to combine the merits of both adaptive control algorithms and remote human operators. Adaptive autopilots (\cite{lavretsky2013robust}) allow for continuous autonomous operation of the vehicle in the presence of parametric uncertainties $\Theta_p$, $\Lambda_p$, and $\Theta_1$, while human operators supervise as necessary. We propose a shared controller to respond to an anomaly which is assumed to change actuator dynamics from (\ref{eq:first_order_act}) to (\ref{eq:second_order_act}) by tasking the human operator with providing key inputs based on higher-level perception of the anomaly, and tasking the adaptive autopilot with retention of low-level regulation and command tracking tasks based on these inputs.
+The shared control framework we propose is designed so as to combine the merits of both adaptive control algorithms and remote human operators. Adaptive autopilots (\cite{lavretsky2013robust}) allow for continuous autonomous operation of the vehicle in the presence of parametric uncertainties $\Theta_p$, $\Lambda_p$, and $\Theta_1$, while human operators supervise as necessary. We propose a shared controller to respond to an anomaly, which is assumed to change actuator dynamics from (\ref{eq:first_order_act}) to (\ref{eq:second_order_act}), by tasking the human operator with providing key inputs based on higher-level perception of the anomaly, and tasking the adaptive autopilot with retention of low-level regulation and command tracking tasks based on these inputs.
 
 %Remote human operators monitor the performance of the vehicles and are trained and able to remotely pilot the vehicle in case of autopilot failure. %
 %The remote piloting of the vehicles, however, is a daunting task due to communication delays and a weakened understanding of the vehicle dynamics, state, and environment, due to the remote naturs of the task. 
@@ -214,7 +214,7 @@ which is used to define filtered error signals $\overline{e}_{\mathcal{I}y}^{[1]
 \begin{equation}
 \begin{aligned}
 	\Pi \big \{  \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \} &= (\alpha_1 \frac{d}{dt} + \alpha_2 \frac{d^2}{dt^2}) \big \{ \hat{\Phi}_1^T (t) e_{y}^{\mathcal{I}}(t) \big \} \\
-	\Pi \big \{  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big \} &= (\alpha_2 \frac{d}{dt}) \big \{ \hat{\Lambda}(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \}
+	\Pi \big \{  \overline{e}_{\mathcal{I}y}^{[1][2]} (t) \big \} &= (\alpha_2 \frac{d}{dt}) \big \{ \hat{\Lambda}^T(t) \overline{e}_{\mathcal{I}y}^{[1]} (t) \big \}
 \end{aligned} \label{eq:eIy_rd3}
 \end{equation}
 where $\hat{\Phi}_1(t)$ and $\hat{\Lambda}(t)$ are matrices of adaptive parameters. We define operators
@@ -272,7 +272,7 @@ In this controller, the adaptive parameters are adjusted using second-order tune
 \end{equation}
 and associated matrix of adaptive parameters
 \begin{equation}
-\hat{\Theta}(t) = \big[ \hat{\phi}_1^T(t),\quad \hat{\phi}_2^T(t),\quad \hat{\Lambda}^T(t) \big].
+\hat{\Theta}(t) = \big[ \hat{\phi}_1^T(t),\quad \hat{\phi}_2^T(t),\quad \hat{\Lambda}^T(t) \big]^T.
 \end{equation}
 
 Inputs to the second-order tuners are calculated by integrating
@@ -358,7 +358,7 @@ The aircraft model used in simulation, developed by \cite{gibson2011modeling} fo
 	\label{fig:vfa}
 \end{figure}
 
-The aircraft model used in simulation represents the nonlinear longitudinal dynamics of a HALE VFA concept with three rigid lifting sections, hinged together such that the aircraft is able to bend at the joints of the three sections. The pitch mode dynamics of this nonlinear model is defined by the state vector
+The aircraft model represents the nonlinear longitudinal dynamics of a HALE VFA concept with three rigid lifting sections, hinged together such that the aircraft is able to bend at the joints of the three sections. The pitch mode dynamics of this nonlinear model is defined by the state vector
 \begin{equation}
 x_{\text{vfa}} = \begin{bmatrix}
 ~V~\\
@@ -427,7 +427,7 @@ y = \begin{bmatrix}
 \end{bmatrix}, \quad z = z_p.
 \end{equation}
 
-For numerical simulations, the VFA model is trimmed at an airspeed of $68$ ft/s, altitude of $40,000$ ft, $2.8^\circ$ angle of attack and pitch angle (level flight), and dihedral angles ranging from $0$ to $20^\circ$ in $1^\circ$ increments. Figure \ref{fig:trim-poles} shows pole locations of the linearized plant for different dihedral angles, and Figure \ref{fig:trim-poles-zoom} shows instability of the linearized plant when trimmed above $11^\circ$ dihedral. Figure \ref{fig:trim-inputs} shows the thrust and control surface deflections for the trimmed VFA model over a range of dihedral angles.
+For numerical simulations, the VFA model is trimmed at an airspeed of 68 ft/s, altitude of 40,000 ft, $2.8^\circ$ angle of attack and pitch angle (level flight), and dihedral angles ranging from 0 to $20^\circ$ in $1^\circ$ increments. Figure \ref{fig:trim-poles} shows pole locations of the linearized plant for different dihedral angles, and Figure \ref{fig:trim-poles-zoom} shows instability of the linearized plant when trimmed above $11^\circ$ dihedral. Figure \ref{fig:trim-inputs} shows the thrust and control surface deflections for the trimmed VFA model over a range of dihedral angles.
 
 \begin{figure}[htbp]
 	\centering
@@ -452,7 +452,7 @@ For numerical simulations, the VFA model is trimmed at an airspeed of $68$ ft/s,
 
 The plant is augmented with a linear actuator model corresponding to (\ref{eq:first_order_act}) in the nominal case and (\ref{eq:second_order_act}) following an anomaly. The vehicle simulation with first-order actuators (\ref{eq:first_order_act}) uses parameters
 \begin{equation}
-D_1 = 2 I_2, \quad \Theta_1 = -1.5 I_2
+D_1 = 2 I_2, \quad \Theta_1 = -1.5 I_2 \label{eq:theta_1}
 \end{equation}
 where $\Theta_1$ is assumed to be unknown for control design, and $I_2$ is the $2 \times 2$ identity matrix. 
 
@@ -468,21 +468,21 @@ Simulation of the anomalous dynamics (\ref{eq:second_order_act}) uses second-ord
 	-3.75 I_2 \\ -2 I_2
 \end{bmatrix}
 \end{equation}
-where $\Theta_1$ and $\Theta_2$ are assumed to be unknown for the adaptive control design. Matrices $\Theta_p$ and $\Lambda_p$ used in simulation represent a linearization of the VFA model at an incorrect dihedral angle, and an 80\% reduction in actuator effectiveness, respectively, and are given by
+where $\Theta_1$ and $\Theta_2$ are assumed to be unknown for the adaptive control design. Matrices $\Theta_p$ and $\Lambda_p$ used in simulation represent modeling errors caused by linearization of the VFA model at an incorrect dihedral angle, and an 80\% reduction in actuator effectiveness, respectively, and are given by
 \begin{equation}
 \begin{gathered}
 \Theta_{p}^{T}=\begin{bmatrix}
 0.6 & -4.52 & \; 0 & \hfill 0.05 & \hfill 0.41 & \hfill 1.47\\
 0.1 & \hfill 1.83 & \; 0 & -0.02 & -0.35 & -0.59
-\end{bmatrix}\\ \Lambda_p = 0.2 I_2. \end{gathered}
+\end{bmatrix}\\ \Lambda_p = 0.2 I_2. \end{gathered} \label{eq:theta_p}
 \end{equation}
 
 \subsection{Numerical Simulations and Results} \label{subsec:sims}
 We begin by simulating the HALE VFA under nominal autonomous control, responding to step inputs in commands for the dihedral angle and vertical acceleration, with the following three variants.
 \begin{description}
-	\item[Nom-1] Baseline RSLQR without uncertainty in control model
-	\item[Nom-2] Baseline RSLQR with uncertainty in control model ($\Theta_p$, $\Lambda_p$, and $\Theta_1$)
-	\item[Nom-3] Baseline RSLQR + adaptive control with uncertainty in control model ($\Theta_p$, $\Lambda_p$, and $\Theta_1$)
+	\item[Nom-1] Baseline RSLQR without uncertainty in control model ($\Theta_p = 0$, $\Lambda_p = 0$, $\Theta_1 = 0$)
+	\item[Nom-2] Baseline RSLQR with uncertainty in control model ($\Theta_1$ in (\ref{eq:theta_1}); $\Theta_p$, $\Lambda_p$ in (\ref{eq:theta_p}))
+	\item[Nom-3] Baseline RSLQR + adaptive control with uncertainty in control model ($\Theta_1$ in (\ref{eq:theta_1}); $\Theta_p$, $\Lambda_p$ in (\ref{eq:theta_p}))
 \end{description}
 
 \begin{figure}[htbp]
@@ -515,7 +515,7 @@ In what follows, we simulate the introduction of an anomaly into the dynamics, c
 	\item[AR-3 (Shared)] Responsibilities are shared between the human pilot and autopilot as described in Section \ref{sec:shared_ctrl}
 \end{description}
 
-Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR-1) in which the human operator ignores vehicle performance degradation and allows the adaptive controller to continue operating on the plant with anomalous dynamics. The closed-loop system loses stability, leading to oscillations in vehicle output and eventual structural failure of the VFA at $t_3^* = 960 s$, 6 minutes after the introduction of second-order actuator dynamics. Note that a passive response using only the RSLQR controller (no adaptation) also leads to structural failure following the anomaly.
+Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR-1) in which the human operator ignores vehicle performance degradation and allows the nominal adaptive controller to continue operating on the plant with anomalous dynamics. The closed-loop system loses stability, leading to oscillations in vehicle output and eventual structural failure of the VFA at $t_3^* = 960 s$, 6 minutes after the introduction of second-order actuator dynamics. Note that a passive response using only the RSLQR controller (no adaptation) also leads to structural failure following the anomaly.
 
 \begin{figure}[htbp]
 	\centering
@@ -540,7 +540,7 @@ Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR
 
 Numerical simulations of the AR-2 response (purely manual control) are not carried out, as they are not deterministic and require high-fidelity human-in-the-loop experiments to characterize. The limitations of such a response are discussed in more detail elsewhere (e.g. \cite{endsley1996automation, hess2015modeling}).
 
-Results of the AR-3 (shared control) anomaly response simulation are shown in Figs. \ref{fig:ar3-sim}--\ref{fig:ar3-err}. After the anomaly is introduced at $t_1^* = 600 s$, the nominal adaptive controller attempts to control the system whose dynamics are not fully accounted for in the control model. Simultaneously in the shared control framework, the human operator notices the anomalous closed-loop control behavior, and via an interface switches the controller to the higher relative degree design (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}) at $t_2^* = 800 s$, which is the culmination of the human operator's action. For $t \geq t_2^*$, the vehicle remains under autonomous control with the recovery adaptive controller and is able to reestablish nominal command tracking performance. For comparison, the time of structural failure in the passive anomaly response is plotted as a line at $t_3^* = 960 s$.
+Results of the AR-3 (shared control) anomaly response simulation are shown in Figs. \ref{fig:ar3-sim}--\ref{fig:ar3-err}. After the anomaly is introduced at $t_1^* = 600 s$, the nominal adaptive controller attempts to control the system whose dynamics are not fully accounted for in the control model. Simultaneously in the shared control framework, the human operator notices the anomalous closed-loop control behavior, and via an interface switches the controller to the higher relative degree design (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}) at $t_2^* = 800 s$, which is the culmination of the human operator's action. For $t \geq t_2^*$, the vehicle remains under autonomous control with the recovery adaptive controller and is able to reestablish nominal command tracking performance and avert failure. For comparison, the time of structural failure in the passive anomaly response is plotted as a line at $t_3^* = 960 s$.
 
 \begin{figure}[htbp]
 	\centering
