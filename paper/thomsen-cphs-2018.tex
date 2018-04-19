@@ -13,7 +13,7 @@
 	
 \title{Shared Control Between Adaptive Autopilots and Human Operators for Anomaly Mitigation}
 
-\thanks[footnoteinfo]{This work was supported by the Boeing Strategic University Initiative.}
+\thanks[footnoteinfo]{\scriptsize{This work was supported by the Boeing Strategic University Initiative.}}
 
 \author[MIT]{Benjamin T. Thomsen} 
 \author[MIT]{Anuradha M. Annaswamy} 
@@ -65,11 +65,11 @@ where $D_1$ is a diagonal matrix representing nominal actuator parameters and $\
 
 The specific anomaly that we consider is assumed to introduce an abrupt change in actuator dynamics from (\ref{eq:first_order_act}) to the second-order model
 \begin{equation}
-	\ddot{u}_p + (D_2 + \Theta_2^T) \dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u. \label{eq:second_order_act}
+	\ddot{u}_p + (D_2 + \Theta_2^T) \dot{u}_p + (D_1 + \Theta_1^T) u_p = D_1 u \label{eq:second_order_act}
 \end{equation}
-This change in dynamics means that the structure of the model used for control design is no longer accurate, and the autonomous controller may lose stability and command tracking ability. In particular, the challenge from the anomaly is the increase in relative degree between $u$ and $y_p$ from two to three.
+where in addition to $\Theta_1$, $\Theta_2$ is an unknown parameter as well. This change in dynamics means that the structure of the model used for control design is no longer accurate, and the autonomous controller may lose stability and command tracking ability. In particular, the challenge from the anomaly is the increase in relative degree between $u$ and $y_p$ from two to three.
 
-In addition to an autonomous controller which generates control input $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}), a human supervisor is tasked with the high-level operation of the plant (\ref{eq:plant_dynamics}), including mission and task planning (commanding its mode of operation) and monitoring to ensure safe and anomaly-free operation. In this paper, we consider remote human operators who cannot sense the vehicle state and dynamics directly through vestibular pathways. An example is the supervision of multiple aerial vehicles, as illustrated in Fig. \ref{fig:uav_supervisor}. It is assumed that the human supervisor has information on plant sensor measurements, state estimate, tracking performance, and health (via visual, haptic, and/or auditory interfaces). The problem we address is whether the design of $u(t)$ can be carried out using a shared decision-making and control architecture using both autonomous control methods and human operators so as to lead to a successful mitigation of an abrupt anomaly causing a change from (\ref{eq:first_order_act}) to (\ref{eq:second_order_act}) and restore tracking performance in the presence of uncertainty.
+In addition to an autonomous controller which generates control input $u(t)$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act}), a human supervisor is tasked with the high-level operation of the plant (\ref{eq:plant_dynamics}), including mission and task planning (commanding its mode of operation) and monitoring to ensure safe and anomaly-free operation. In this paper, we consider remote human operators, an example of which is the supervision of multiple aerial vehicles, as illustrated in Fig. \ref{fig:uav_supervisor}. It is assumed that the human supervisor has access to information on plant sensor measurements, state estimate, tracking performance, and health (via visual, haptic, and/or auditory interfaces), and is able to perceive changes in plant dynamics, such as an increased lag or decreased control effectiveness, via these interfaces. The problem we address is whether the design of $u(t)$ can be carried out using a shared decision-making and control architecture using both autonomous control methods and human operators so as to lead to a successful mitigation of an abrupt anomaly causing a change from (\ref{eq:first_order_act}) to (\ref{eq:second_order_act}) and restore tracking performance in the presence of uncertainty.
 
 \begin{figure}[htbp]
 	\centering
@@ -120,7 +120,7 @@ y=Cx,\qquad z=C_{z}x
 \end{equation}
 where $x\in\mathbb{R}^{n}$, $u\in\mathbb{R}^{m}$, $y\in\mathbb{R}^{p}$ are redefined states, inputs and outputs, respectively. 
 %A full justification for this form of the plant can be found in \cite{qu2016phd, qu2016adaptive}. 
-This plant has unknown matrices $\Psi_1$, $\Psi_r$, and $\Lambda$, which contain plant uncertainties ($\Theta_p$), actuator uncertainties ($\Theta_i$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act})), and control effectiveness ($\Lambda_p$), respectively. We consider square plants with $m = p$. The subscript $r$ indicates the relative degree of the augmented plant, and the definitions of $B_r$ and $\Psi_r$ depend on whether the actuators are first-order (\ref{eq:first_order_act}) or second-order (\ref{eq:second_order_act}). It is noted that the augmented plant model which arises from the inclusion of actuator model (\ref{eq:first_order_act}) in the plant (\ref{eq:plant_dynamics}) has relative degree two, while the augmented plant model associated with the inclusion of actuator model (\ref{eq:second_order_act}) has relative degree three. 
+This plant has unknown matrices $\Psi_1$, $\Psi_r$, and $\Lambda$, which contain plant uncertainties ($\Theta_p$), actuator uncertainties ($\Theta_i$ in (\ref{eq:first_order_act}) and (\ref{eq:second_order_act})), and control effectiveness ($\Lambda_p$), respectively. We restrict our attention in this paper to square plants with $m = p$. The subscript $r$ indicates the relative degree of the augmented plant, and the definitions of $B_r$ and $\Psi_r$ depend on whether the actuators are first-order (\ref{eq:first_order_act}) or second-order (\ref{eq:second_order_act}). It is noted that the augmented plant model which arises from the inclusion of actuator model (\ref{eq:first_order_act}) in the plant (\ref{eq:plant_dynamics}) has relative degree two, while the augmented plant model associated with the inclusion of actuator model (\ref{eq:second_order_act}) has relative degree three. 
 
 For control design, closed-loop reference models (\cite{gibson2013adaptive}) are designed as
 \begin{equation}
@@ -144,7 +144,7 @@ where $\alpha_i > 0$ are free design parameters. We then define
 \begin{align}
 S &= (C B_1^a)^T \label{eq:S}\\	\overline{C} & = S C\\ R^{-1} &= (\overline{C} B_1^a)^{-1} \big[ \overline{C} A B_1^a + (\overline{C} A B_1^a)^T\big] (\overline{C} B_1^a)^{-1} + \epsilon I \\ L & = B_1^a R^{-1} S \label{eq:L}
 \end{align}
-where $\epsilon > 0$ \cite[Eq. 30]{qu2015adaptive} is chosen to guarantee stability of the adaptive system. 
+where $\epsilon > 0$ (\cite{qu2016adaptive}) is chosen to guarantee stability of the adaptive system. 
 
 The function $\mathcal{F}_2(t)$ makes use of scaled error signal
 \begin{equation}
@@ -321,8 +321,8 @@ where $C_T^{\delta}, C_T^{\delta \delta} \in \mathbb{R}^{m \times 2m}$ are block
 %Notices, reacts, instructs.
 We task the remote human supervisor with the following three responsibilities for shared anomaly response.
 \begin{enumerate}[label=Task \arabic*., leftmargin=1.4cm]
-	\item Timely detection and characterization of anomalous closed-loop dynamical behavior
-	\item Isolation of control loop with anomalous behavior (i.e. longitudinal or lateral-directional)
+	\item Timely detection of anomalous closed-loop dynamical behavior
+	\item Isolation and characterization of anomaly
 	\item Commanding a change from nominal autopilot (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) to recovery autopilot (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv})
 \end{enumerate}
 
@@ -331,9 +331,15 @@ The first task requires an attentive human operator able to discern that
 	\item an anomaly has occurred and control performance degradation is not caused solely by external disturbances;
 	\item swift action must be taken in order to recover stability and performance;
 	\item it may be possible to recover stability and performance via corrective action.
-\end{enumerate}
+\end{enumerate}	
 
-The second task requires a human operator with knowledge and familiarity with the plant dynamics and control structure to understand which control loop (e.g. pitch mode, roll mode, airspeed, in a fixed-wing UAV application) is the source of the anomalous dynamics. 
+For the second task, the human operator must
+\begin{enumerate}[label=(\alph*)]
+	\item understand which control loop (e.g. pitch mode, roll mode, airspeed, in a fixed-wing UAV application) is affected by anomaly;
+	\item perceive an anomalous lag in plant response to commands.
+\end{enumerate}	
+
+%The second task requires a human operator with knowledge and familiarity with the plant dynamics and control structure to understand which control loop (e.g. pitch mode, roll mode, airspeed, in a fixed-wing UAV application) is the source of the anomalous dynamics. 
 
 The final task for the trained remote human operator is the transfer of this diagnosis to the autopilot, by changing the relevant controller to its recovery mode.
 
@@ -468,7 +474,7 @@ Simulation of the anomalous dynamics (\ref{eq:second_order_act}) uses second-ord
 	-3.75 I_2 \\ -2 I_2
 \end{bmatrix}
 \end{equation}
-where $\Theta_1$ and $\Theta_2$ are assumed to be unknown for the adaptive control design. Matrices $\Theta_p$ and $\Lambda_p$ used in simulation represent modeling errors caused by linearization of the VFA model at an incorrect dihedral angle, and an 80\% reduction in actuator effectiveness, respectively, and are given by
+where $\Theta_1$ and $\Theta_2$ are assumed to be unknown for the adaptive control design. Matrices $\Theta_p$ and $\Lambda_p$ used in simulation represent modeling errors that are assumed to be caused by linearization of the VFA model at an incorrect dihedral angle, and an 80\% reduction in actuator effectiveness, respectively, and are given by
 \begin{equation}
 \begin{gathered}
 \Theta_{p}^{T}=\begin{bmatrix}
@@ -477,6 +483,10 @@ where $\Theta_1$ and $\Theta_2$ are assumed to be unknown for the adaptive contr
 \end{bmatrix}\\ \Lambda_p = 0.2 I_2. \end{gathered} \label{eq:theta_p}
 \end{equation}
 
+%It was assumed that the nominal adaptive controller is designed to accommodate the uncertainties $\Theta_1$, $\Theta_p$ and $\Lambda_p$, that an anomaly occurs which causes an abrupt change in the relative degree, and that the recovery adaptive controller is designed to accommodate $\Theta_2$, once the relative degree is known. 
+The structural design of the HALE VFA is assumed to be such that it can withstand an anomaly with the nominal control design for about $360s$ $(t_3^*-t_1^* \sim 360s)$, while the human operator is assumed to perceive the abrupt increase in lag in the VFA's response to commands, and thus the increase in relative degree, within $200 s$ $(t_2^*-t_1^* \sim 200s)$.
+
+Both the nominal and recovery adaptive controllers utilize a number of free design parameters, including LQR weight matrices and adaptation rates. Their numerical values in these simulations are available online\footnote{\texttt{http://aaclab.mit.edu/resources/cphs-2018/}}.
 \subsection{Numerical Simulations and Results} \label{subsec:sims}
 We begin by simulating the HALE VFA under nominal autonomous control, responding to step inputs in commands for the dihedral angle and vertical acceleration, with the following three variants.
 \begin{description}
@@ -506,16 +516,16 @@ We begin by simulating the HALE VFA under nominal autonomous control, responding
 	\label{fig:nom3}
 \end{figure}
 
-These simulations, presented in Figs. \ref{fig:nom1}, \ref{fig:nom2}, and \ref{fig:nom3} respectively, show how the adaptive controller with output feedback described in (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) is able to recover the desired closed-loop performance with uncertainty in plant and actuator parameters. With the baseline RSLQR controller only, the system suffers degraded command tracking performance in the presence of uncertainty (Fig. \ref{fig:nom2}), especially for vertical acceleration tracking.
+These simulations, presented in Figs. \ref{fig:nom1}, \ref{fig:nom2}, and \ref{fig:nom3} respectively, show how the adaptive controller with output feedback described in (\ref{eq:rd2-b1a})--(\ref{eq:rd2-adaptation}) is able to recover the desired closed-loop performance with uncertainty in plant and actuator parameters, which are assumed to be present due to modeling errors. With the baseline RSLQR controller only, the system suffers degraded command tracking performance in the presence of uncertainty (Fig. \ref{fig:nom2}), especially for vertical acceleration tracking.
 
-In what follows, we simulate the introduction of an anomaly into the dynamics, causing the vehicle's actuators to change abruptly from the uncertain first-order dynamics (\ref{eq:first_order_act}) to the uncertain second-order dynamics (\ref{eq:second_order_act}). In these simulations, the vehicle operates in nominal operation with the RSLQR + adaptive control design for $0 \leq t < t_1^*$. At $t_1^* = 600 s$, the vehicle's actuators change from (\ref{eq:first_order_act}) to (\ref{eq:second_order_act}). The three responses to this anomaly which we will consider are
+In what follows, we simulate the introduction of an anomaly into the dynamics, causing the vehicle's actuators to change abruptly from the uncertain first-order dynamics (\ref{eq:first_order_act}) to the uncertain second-order dynamics (\ref{eq:second_order_act}) at $t_1^* = 600s$. We consider three responses to the anomaly.
 \begin{description}
-	\item[AR-1 (Passive)] The (RSLQR + adaptive control) autopilot retains control without intervention from the remote human supervisor
+	\item[AR-1 (Passive)] The nominal autopilot retains control without intervention from the human supervisor
 	\item[AR-2 (Manual)] The human operator takes over manual control of the affected vehicle
-	\item[AR-3 (Shared)] Responsibilities are shared between the human pilot and autopilot as described in Section \ref{sec:shared_ctrl}
+	\item[AR-3 (Shared)] Responsibilities are shared between the human and autopilot as described in Section \ref{sec:shared_ctrl}
 \end{description}
 
-Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR-1) in which the human operator ignores vehicle performance degradation and allows the nominal adaptive controller to continue operating on the plant with anomalous dynamics. The closed-loop system loses stability, leading to oscillations in vehicle output and eventual structural failure of the VFA at $t_3^* = 960 s$, 6 minutes after the introduction of second-order actuator dynamics. Note that a passive response using only the RSLQR controller (no adaptation) also leads to structural failure following the anomaly.
+Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR-1) in which the human operator ignores vehicle performance degradation and allows the nominal adaptive controller to continue operating on the plant with anomalous dynamics. The closed-loop system loses stability, leading to oscillations in vehicle output and eventual structural failure of the VFA at $t_3^* = 960 s$. Note that a passive response using only the RSLQR controller (no adaptation) also leads to structural failure following the anomaly.
 
 \begin{figure}[htbp]
 	\centering
@@ -540,7 +550,7 @@ Figs. \ref{fig:ar1}--\ref{fig:ar1-err} show the result of a passive response (AR
 
 Numerical simulations of the AR-2 response (purely manual control) are not carried out, as they are not deterministic and require high-fidelity human-in-the-loop experiments to characterize. The limitations of such a response are discussed in more detail elsewhere (e.g. \cite{endsley1996automation, hess2015modeling}).
 
-Results of the AR-3 (shared control) anomaly response simulation are shown in Figs. \ref{fig:ar3-sim}--\ref{fig:ar3-err}. After the anomaly is introduced at $t_1^* = 600 s$, the nominal adaptive controller attempts to control the system whose dynamics are not fully accounted for in the control model. Simultaneously in the shared control framework, the human operator notices the anomalous closed-loop control behavior, and via an interface switches the controller to the higher relative degree design (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}) at $t_2^* = 800 s$, which is the culmination of the human operator's action. For $t \geq t_2^*$, the vehicle remains under autonomous control with the recovery adaptive controller and is able to reestablish nominal command tracking performance and avert failure. For comparison, the time of structural failure in the passive anomaly response is plotted as a line at $t_3^* = 960 s$.
+Results of the AR-3 (shared control) anomaly response simulation are shown in Figs. \ref{fig:ar3-sim}--\ref{fig:ar3-err}. After the anomaly is introduced at $t_1^* = 600 s$, the nominal adaptive controller attempts to control the system whose dynamics are not fully accounted for in the control model. Simultaneously in the shared control framework, the human operator notices the anomalous closed-loop control behavior, and via an interface switches the controller to the higher relative degree design (\ref{eq:rd3-b1a})--(\ref{eq:rd3-adaptation-deriv}) at $t_2^* = 800 s$, which is the culmination of the human operator's action. For $t \geq t_2^*$, the vehicle remains under autonomous control with the recovery adaptive controller and is able to reestablish nominal command tracking performance and avert failure (which was assumed to occur at $t_3^* = 960 s$).
 
 \begin{figure}[htbp]
 	\centering
